@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg2: var(--bg2);
+  --color-surface: var(--surface);
+  --color-surface2: var(--surface2);
+  --color-border: var(--border);
+  --color-border2: var(--border2);
+  --color-text: var(--text);
+  --color-text2: var(--text2);
+  --color-text3: var(--text3);
+  --color-gold: var(--gold);
+  --color-gold-hover: var(--gold-hover);
+  --color-gold-light: var(--gold-light);
+  --color-gold-border: var(--gold-border);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --font-heading: var(--font-playfair);
+  --font-ui: var(--font-inter);
+  --font-mono: var(--font-dm-mono);
+}
+
+:root {
+  --bg: #F9F7F4;
+  --bg2: #F3F0EB;
+  --surface: #FFFFFF;
+  --surface2: #FAF8F5;
+  --border: #E4DDD3;
+  --border2: #D4CCC0;
+  --text: #1A1814;
+  --text2: #6B6258;
+  --text3: #9B9088;
+  --gold: #B8882E;
+  --gold-hover: #C99A38;
+  --gold-light: #F7EDD5;
+  --gold-border: #E8D090;
+  --danger: #C0392B;
+  --danger-bg: #FDF0EE;
+}
+
+.dark {
+  --bg: #111009;
+  --bg2: #181510;
+  --surface: #1C1914;
+  --surface2: #221F18;
+  --border: #2E2920;
+  --border2: #3A342A;
+  --text: #EDE8E0;
+  --text2: #9B9085;
+  --text3: #635D56;
+  --gold: #CFA044;
+  --gold-hover: #DDB355;
+  --gold-light: #251D08;
+  --gold-border: #5A4510;
+  --danger: #E05242;
+  --danger-bg: #2A1210;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui), system-ui, sans-serif;
+  transition: background 0.25s, color 0.25s;
+}
