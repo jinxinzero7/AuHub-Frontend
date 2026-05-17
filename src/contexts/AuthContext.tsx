@@ -32,7 +32,7 @@ function decodeJwt(token: string): User | null {
       id: payload.sub || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"],
       email: payload.email || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"],
       name: payload.name || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"],
-      role: payload.role === "Admin" ? 1 : 0,
+      role: (payload.role || payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]) === "Admin" ? 1 : 0,
     };
   } catch {
     return null;

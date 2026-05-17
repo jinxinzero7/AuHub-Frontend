@@ -14,6 +14,7 @@ interface LotCardProps {
     endTime: string;
     status: string;
     bidsCount: number;
+    coverImageUrl?: string;
   };
 }
 
@@ -67,10 +68,20 @@ export default function LotCard({ lot }: LotCardProps) {
   const gradient = gradients[parseInt(lot.id.replace(/-/g, ""), 36) % gradients.length];
   const isUrgent = time.seconds < 120 && time.isLive;
   const isActive = lot.status === "Active";
+  const hasCoverImage = !!lot.coverImageUrl;
+  const imageUrl = hasCoverImage ? lot.coverImageUrl! : null;
 
   return (
     <Link href={`/lots/${lot.id}`} className="group bg-surface border border-border rounded-[10px] overflow-hidden hover:border-gold hover:translate-y-[-1px] transition-all duration-200 block">
-      <div className="w-full h-[162px] relative overflow-hidden" style={{ background: gradient }}>
+      <div className="w-full h-[162px] relative overflow-hidden" style={{ background: hasCoverImage ? undefined : gradient }}>
+        {hasCoverImage && imageUrl && (
+          <img
+            src={imageUrl}
+            alt={lot.title}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        )}
         <div className="absolute top-[10px] left-[10px]">
           {time.isLive ? (
             <span className="text-[10px] font-medium px-2 py-[3px] rounded bg-[rgba(192,57,43,0.2)] text-[#E05242] tracking-[0.2px]">

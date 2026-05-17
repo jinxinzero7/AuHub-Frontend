@@ -36,6 +36,7 @@ export interface Lot {
   createdAt: string;
   updatedAt: string;
   bidsCount: number;
+  coverImageUrl?: string;
 }
 
 export interface Bid {

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
+import { validateEmail, validatePassword, validateName } from "@/lib/validation";
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -10,22 +11,38 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState(0);
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [serverError, setServerError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setServerError("");
+
+    const newErrors: Record<string, string> = {};
+    const nameErr = validateName(name);
+    const emailErr = validateEmail(email);
+    const passErr = validatePassword(password);
+    if (nameErr) newErrors.name = nameErr;
+    if (emailErr) newErrors.email = emailErr;
+    if (passErr) newErrors.password = passErr;
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setErrors({});
     setIsLoading(true);
 
     try {
       await register({ email, password, name, role });
     } catch (err: unknown) {
       if (err instanceof Error && "response" in err) {
-        const axiosErr = err as { response?: { data?: { message?: string } } };
-        setError(axiosErr.response?.data?.message || "Ошибка регистрации");
+        const axiosErr = err as { response?: { data?: { errors?: { generalErrors?: string[] } } } };
+        setServerError(axiosErr.response?.data?.errors?.generalErrors?.[0] || "Ошибка регистрации");
       } else {
-        setError("Ошибка регистрации");
+        setServerError("Ошибка регистрации");
       }
     } finally {
       setIsLoading(false);
@@ -44,10 +61,10 @@ export default function RegisterPage() {
         </div>
 
         <div className="bg-surface border border-border rounded-[10px] p-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+            {serverError && (
               <div className="text-[13px] text-danger bg-danger-bg border border-danger/20 rounded-[7px] px-4 py-2.5">
-                {error}
+                {serverError}
               </div>
             )}
 
@@ -59,11 +76,11 @@ export default function RegisterPage() {
                 id="name"
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className="w-full px-3 py-2.5 text-[14px] bg-bg2 border border-border rounded-[7px] text-text placeholder:text-text3 outline-none focus:border-gold transition-colors font-ui"
+                onChange={(e) => { setName(e.target.value); setErrors(prev => ({ ...prev, name: "" })); }}
+                className={`w-full px-3 py-2.5 text-[14px] bg-bg2 border rounded-[7px] text-text placeholder:text-text3 outline-none transition-colors font-ui ${errors.name ? "border-danger" : "border-border focus:border-gold"}`}
                 placeholder="Ваше имя"
               />
+              {errors.name && <p className="text-[12px] text-danger mt-1">{errors.name}</p>}
             </div>
 
             <div>
@@ -74,11 +91,11 @@ export default function RegisterPage() {
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-3 py-2.5 text-[14px] bg-bg2 border border-border rounded-[7px] text-text placeholder:text-text3 outline-none focus:border-gold transition-colors font-ui"
+                onChange={(e) => { setEmail(e.target.value); setErrors(prev => ({ ...prev, email: "" })); }}
+                className={`w-full px-3 py-2.5 text-[14px] bg-bg2 border rounded-[7px] text-text placeholder:text-text3 outline-none transition-colors font-ui ${errors.email ? "border-danger" : "border-border focus:border-gold"}`}
                 placeholder="your@email.com"
               />
+              {errors.email && <p className="text-[12px] text-danger mt-1">{errors.email}</p>}
             </div>
 
             <div>
@@ -89,12 +106,11 @@ export default function RegisterPage() {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={8}
-                className="w-full px-3 py-2.5 text-[14px] bg-bg2 border border-border rounded-[7px] text-text placeholder:text-text3 outline-none focus:border-gold transition-colors font-ui"
+                onChange={(e) => { setPassword(e.target.value); setErrors(prev => ({ ...prev, password: "" })); }}
+                className={`w-full px-3 py-2.5 text-[14px] bg-bg2 border rounded-[7px] text-text placeholder:text-text3 outline-none transition-colors font-ui ${errors.password ? "border-danger" : "border-border focus:border-gold"}`}
                 placeholder="Минимум 8 символов"
               />
+              {errors.password && <p className="text-[12px] text-danger mt-1">{errors.password}</p>}
             </div>
 
             <div>

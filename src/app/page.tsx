@@ -1,25 +1,42 @@
 import Header from "@/components/Header";
 import LotCard from "@/components/LotCard";
 import api from "@/lib/api";
-import type { Lot } from "@/types";
+import type { Lot, PaginatedResponse } from "@/types";
+import type { Metadata } from "next";
+import Link from "next/link";
 
-async function getLots(): Promise<Lot[]> {
+const PAGE_SIZE = 9;
+
+async function getLots(page: number): Promise<PaginatedResponse<Lot>> {
   try {
-    const response = await api.get("/api/lots");
-    if (response.data.success) {
-      return response.data.lots || [];
-    }
-    return [];
+    const response = await api.get("/api/lots", {
+      params: { page, pageSize: PAGE_SIZE },
+    });
+    return response.data;
   } catch {
-    return [];
+    return { success: false, lots: [], page, pageSize: PAGE_SIZE, totalCount: 0, totalPages: 0, error: null };
   }
 }
 
-export default async function HomePage() {
-  const lots = await getLots();
+export const metadata: Metadata = {
+  title: "AuHub — Онлайн аукционы",
+  description: "Редкие предметы, честные торги, ставки в реальном времени. Современная платформа онлайн-аукционов.",
+  keywords: ["аукцион", "онлайн торги", "AuHub", "ставки"],
+};
 
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const params = await searchParams;
+  const currentPage = Math.max(1, parseInt(params.page || "1", 10));
+  const data = await getLots(currentPage);
+
+  const lots = data.lots || [];
+  const totalPages = data.totalPages || 0;
+  const totalCount = data.totalCount || 0;
   const activeLots = lots.filter((l) => l.status === "Active");
-  const totalCount = lots.length;
 
   return (
     <>
@@ -58,17 +75,57 @@ export default async function HomePage() {
             <div className="max-w-[960px] mx-auto px-4 sm:px-8 mt-6">
               <div className="flex items-baseline justify-between">
                 <h2 className="text-[14px] font-medium text-text">Активные аукционы</h2>
-                <span className="text-[12px] text-text2">Показано {lots.length}</span>
+                <span className="text-[12px] text-text2">
+                  Страница {currentPage} из {totalPages}
+                </span>
               </div>
             </div>
 
-            <div className="max-w-[960px] mx-auto px-4 sm:px-8 mt-3 mb-12">
+            <div className="max-w-[960px] mx-auto px-4 sm:px-8 mt-3 mb-8">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[15px]">
                 {lots.map((lot) => (
                   <LotCard key={lot.id} lot={lot} />
                 ))}
               </div>
             </div>
+
+            {totalPages > 1 && (
+              <div className="max-w-[960px] mx-auto px-4 sm:px-8 mb-12">
+                <div className="flex items-center justify-center gap-2">
+                  {currentPage > 1 && (
+                    <Link
+                      href={currentPage === 2 ? "/" : `/?page=${currentPage - 1}`}
+                      className="px-4 py-2 text-[13px] text-text2 border border-border rounded-[8px] hover:border-gold hover:text-gold transition-colors"
+                    >
+                      ← Назад
+                    </Link>
+                  )}
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                    <Link
+                      key={p}
+                      href={p === 1 ? "/" : `/?page=${p}`}
+                      className={`px-4 py-2 text-[13px] rounded-[8px] transition-colors ${
+                        p === currentPage
+                          ? "bg-gold text-bg font-medium"
+                          : "text-text2 border border-border hover:border-gold hover:text-gold"
+                      }`}
+                    >
+                      {p}
+                    </Link>
+                  ))}
+
+                  {currentPage < totalPages && (
+                    <Link
+                      href={`/?page=${currentPage + 1}`}
+                      className="px-4 py-2 text-[13px] text-text2 border border-border rounded-[8px] hover:border-gold hover:text-gold transition-colors"
+                    >
+                      Вперёд →
+                    </Link>
+                  )}
+                </div>
+              </div>
+            )}
           </>
         )}
 
