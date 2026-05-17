@@ -1,6 +1,6 @@
 # AuHub Frontend
 
-Платформа для онлайн-аукционов — клиентская часть. Построена на **Next.js 16.2** с Turbopack, SSR для SEO и real-time обновлениями через SignalR.
+Клиентская часть платформы онлайн-аукционов. **Next.js 16.2** с SSR для SEO, real-time обновлениями через SignalR и загрузкой изображений.
 
 **Backend:** https://github.com/jinxinzero7/AuHub
 
@@ -8,31 +8,31 @@
 
 ## Технологический стек
 
-- **Next.js 16.2** — App Router, Turbopack, React Server Components
-- **TypeScript** — полная типизация
-- **TailwindCSS 4** — стилизация через CSS variables
-- **Axios** — HTTP клиент с JWT interceptors
-- **@microsoft/signalr** — real-time обновления
-- **lucide-react** — иконки
+| Компонент | Технология |
+|-----------|-----------|
+| Фреймворк | Next.js 16.2 (App Router, Turbopack, RSC) |
+| Язык | TypeScript 5+ |
+| Стили | TailwindCSS 4 (CSS variables, dark mode) |
+| HTTP | Axios с JWT interceptors |
+| Real-time | @microsoft/signalr (auto-reconnect) |
+| Иконки | lucide-react |
+| Docker | Multi-stage build, standalone output |
 
 ## Дизайн
 
 **Концепция:** "Modern Auction House" — вдохновение Christie's и Sotheby's.
 
-**Палитра:** тёплые нейтралы + золото, без холодного синего.
+**Палитра:** тёплые нейтралы + золото.
 
 | Роль | Светлая тема | Тёмная тема |
 |---|---|---|
 | Background | `#F9F7F4` | `#111009` |
 | Surface | `#FFFFFF` | `#1C1914` |
 | Text | `#1A1814` | `#EDE8E0` |
-| Gold accent | `#B8882E` | `#CFA044` |
+| Gold | `#B8882E` | `#CFA044` |
 | Danger | `#C0392B` | `#E05242` |
 
-**Шрифты:**
-- **Playfair Display** — заголовки (ощущение аукционного дома)
-- **Inter** — UI текст
-- **DM Mono** — таймеры и цены (tabular-nums)
+**Шрифты:** Playfair Display (заголовки), Inter (UI), DM Mono (таймеры/цены).
 
 ---
 
@@ -42,25 +42,38 @@
 src/
 ├── app/
 │   ├── layout.tsx                 # Root layout + fonts + providers
-│   ├── page.tsx                   # Home (SSR lot grid)
+│   ├── page.tsx                   # Home (SSR lot grid + pagination)
 │   ├── globals.css                # Design system (CSS vars, themes)
+│   ├── loading.tsx                # Global loading skeleton
+│   ├── error.tsx                  # Global error boundary
+│   ├── not-found.tsx              # Custom 404 page
+│   ├── sitemap.ts                 # Dynamic sitemap (revalidate 1h)
+│   ├── robots.ts                  # robots.txt
 │   ├── login/page.tsx             # Login page
 │   ├── register/page.tsx          # Register page
 │   ├── profile/page.tsx           # User profile
 │   └── lots/
-│       ├── [id]/page.tsx          # Lot details (SSR)
+│       ├── [id]/page.tsx          # Lot details (SSR + metadata)
+│       ├── [id]/loading.tsx       # Lot loading skeleton
 │       └── create/page.tsx        # Create lot (Admin only)
 │
 ├── components/
 │   ├── Header.tsx                 # Nav + search + theme toggle + auth
-│   └── LotCard.tsx                # Lot card with live timer
+│   ├── LotCard.tsx                # Lot card with live timer + cover image
+│   ├── BidForm.tsx                # Bid placement (validation, auth check)
+│   ├── ImageUpload.tsx            # Drag-and-drop image upload (MinIO)
+│   └── LotDetailClient.tsx        # Client-side lot page (SignalR, bids, gallery)
+│
+├── hooks/
+│   └── useSignalR.ts              # SignalR hook (auto-reconnect, events)
 │
 ├── contexts/
 │   ├── AuthContext.tsx            # JWT auth + auto-refresh
 │   └── ThemeContext.tsx           # Light/dark toggle
 │
 ├── lib/
-│   └── api.ts                     # Axios instance + interceptors
+│   ├── api.ts                     # Axios instance + interceptors
+│   └── validation.ts              # Form validation helpers
 │
 └── types/
     └── index.ts                   # TypeScript types
@@ -72,29 +85,28 @@ src/
 
 ### Требования
 
-- Node.js 22+
+- Node.js 20+
 - Запущенный AuHub Backend (Docker)
 
 ### Запуск
 
 ```bash
-# 1. Установить зависимости
 npm install
-
-# 2. Запустить backend (в отдельном терминале)
-cd ../AuHub
-docker compose up -d
-
-# 3. Запустить frontend
 npm run dev
 ```
 
 Открой **http://localhost:3000**
 
-### Доступные скрипты
+### Docker
 
 ```bash
-npm run dev       # Dev server с Turbopack
+docker compose up -d --build
+```
+
+### Скрипты
+
+```bash
+npm run dev       # Dev server (Turbopack)
 npm run build     # Production build
 npm run start     # Production server
 npm run lint      # ESLint
@@ -107,28 +119,36 @@ npm run lint      # ESLint
 ### Реализовано
 
 - [x] Регистрация и вход с JWT
-- [x] Автоматический refresh токена
-- [x] Список лотов (SSR)
-- [x] Детали лота (SSR)
+- [x] Автоматический refresh токена (Microsoft claim fix)
+- [x] SSR networking (INTERNAL_API_URL для Docker)
+- [x] Список лотов с пагинацией (SSR)
+- [x] Детали лота с SSR + SEO metadata
 - [x] Создание лота (Admin only)
 - [x] Профиль пользователя
-- [x] Тёмная/светлая тема с переключателем
+- [x] Тёмная/светлая тема с localStorage
 - [x] Live-таймер на карточках лотов
-- [x] Responsive дизайн
+- [x] SignalR real-time обновления ставок
+- [x] Bid placement с валидацией
+- [x] Image upload (drag-and-drop, progress bar, multi-file)
+- [x] Cover images на главной + галерея на странице лота
+- [x] SEO: generateMetadata, sitemap, robots
+- [x] Loading skeletons, error boundary, 404 page
+- [x] Docker multi-stage build
 
-### В работе
+### В планах
 
-- [ ] Размещение ставок
-- [ ] SignalR real-time обновления
-- [ ] SEO (meta tags, sitemap, robots)
-- [ ] Toast уведомления
-- [ ] Loading skeletons
+- [ ] Поиск и фильтрация лотов
+- [ ] Сортировка (по цене, времени, ставкам)
+- [ ] Toast уведомления (sonner)
+- [ ] Клиентская валидация форм (react-hook-form + zod)
+- [ ] Responsive доработки (mobile-first)
+- [ ] Offline-состояние
 
 ---
 
 ## API
 
-Все запросы идут через **YARP Gateway** на `http://localhost:5000`.
+Все запросы через **YARP Gateway** (`http://localhost:5000`).
 
 | Метод | Endpoint | Описание | Auth |
 |---|---|---|---|
@@ -140,17 +160,13 @@ npm run lint      # ESLint
 | POST | `/api/lots` | Создать лот | Admin |
 | POST | `/api/lots/{id}/bids` | Сделать ставку | Auth |
 | GET | `/api/lots/{id}/bids` | История ставок | Нет |
+| POST | `/api/lots/{id}/images` | Загрузить фото | Admin |
+| GET | `/api/lots/{id}/images` | Список фото | Нет |
 
----
+### SignalR
 
-## Планы развития
-
-1. **SignalR** — real-time обновление цены и статуса лотов
-2. **Bid placement** — полноценная форма ставок с валидацией
-3. **SEO** — динамический sitemap, meta tags для каждого лота
-4. **Notifications** — интеграция с Notifications Service
-5. **Изображения** — загрузка и отображение фото лотов
-6. **Фильтры** — поиск, сортировка, категории
+- Hub: `/hubs/auction`
+- Events: `NewBidPlaced`, `LotCompleted`
 
 ---
 
