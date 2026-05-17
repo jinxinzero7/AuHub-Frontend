@@ -1,36 +1,158 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AuHub Frontend
 
-## Getting Started
+Платформа для онлайн-аукционов — клиентская часть. Построена на **Next.js 16.2** с Turbopack, SSR для SEO и real-time обновлениями через SignalR.
 
-First, run the development server:
+**Backend:** https://github.com/jinxinzero7/AuHub
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## Технологический стек
+
+- **Next.js 16.2** — App Router, Turbopack, React Server Components
+- **TypeScript** — полная типизация
+- **TailwindCSS 4** — стилизация через CSS variables
+- **Axios** — HTTP клиент с JWT interceptors
+- **@microsoft/signalr** — real-time обновления
+- **lucide-react** — иконки
+
+## Дизайн
+
+**Концепция:** "Modern Auction House" — вдохновение Christie's и Sotheby's.
+
+**Палитра:** тёплые нейтралы + золото, без холодного синего.
+
+| Роль | Светлая тема | Тёмная тема |
+|---|---|---|
+| Background | `#F9F7F4` | `#111009` |
+| Surface | `#FFFFFF` | `#1C1914` |
+| Text | `#1A1814` | `#EDE8E0` |
+| Gold accent | `#B8882E` | `#CFA044` |
+| Danger | `#C0392B` | `#E05242` |
+
+**Шрифты:**
+- **Playfair Display** — заголовки (ощущение аукционного дома)
+- **Inter** — UI текст
+- **DM Mono** — таймеры и цены (tabular-nums)
+
+---
+
+## Структура проекта
+
+```
+src/
+├── app/
+│   ├── layout.tsx                 # Root layout + fonts + providers
+│   ├── page.tsx                   # Home (SSR lot grid)
+│   ├── globals.css                # Design system (CSS vars, themes)
+│   ├── login/page.tsx             # Login page
+│   ├── register/page.tsx          # Register page
+│   ├── profile/page.tsx           # User profile
+│   └── lots/
+│       ├── [id]/page.tsx          # Lot details (SSR)
+│       └── create/page.tsx        # Create lot (Admin only)
+│
+├── components/
+│   ├── Header.tsx                 # Nav + search + theme toggle + auth
+│   └── LotCard.tsx                # Lot card with live timer
+│
+├── contexts/
+│   ├── AuthContext.tsx            # JWT auth + auto-refresh
+│   └── ThemeContext.tsx           # Light/dark toggle
+│
+├── lib/
+│   └── api.ts                     # Axios instance + interceptors
+│
+└── types/
+    └── index.ts                   # TypeScript types
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Быстрый старт
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Требования
 
-## Learn More
+- Node.js 22+
+- Запущенный AuHub Backend (Docker)
 
-To learn more about Next.js, take a look at the following resources:
+### Запуск
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# 1. Установить зависимости
+npm install
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# 2. Запустить backend (в отдельном терминале)
+cd ../AuHub
+docker compose up -d
 
-## Deploy on Vercel
+# 3. Запустить frontend
+npm run dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Открой **http://localhost:3000**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Доступные скрипты
+
+```bash
+npm run dev       # Dev server с Turbopack
+npm run build     # Production build
+npm run start     # Production server
+npm run lint      # ESLint
+```
+
+---
+
+## Функционал
+
+### Реализовано
+
+- [x] Регистрация и вход с JWT
+- [x] Автоматический refresh токена
+- [x] Список лотов (SSR)
+- [x] Детали лота (SSR)
+- [x] Создание лота (Admin only)
+- [x] Профиль пользователя
+- [x] Тёмная/светлая тема с переключателем
+- [x] Live-таймер на карточках лотов
+- [x] Responsive дизайн
+
+### В работе
+
+- [ ] Размещение ставок
+- [ ] SignalR real-time обновления
+- [ ] SEO (meta tags, sitemap, robots)
+- [ ] Toast уведомления
+- [ ] Loading skeletons
+
+---
+
+## API
+
+Все запросы идут через **YARP Gateway** на `http://localhost:5000`.
+
+| Метод | Endpoint | Описание | Auth |
+|---|---|---|---|
+| POST | `/api/auth/register` | Регистрация | Нет |
+| POST | `/api/auth/login` | Вход | Нет |
+| POST | `/api/auth/refresh` | Обновление токена | Нет |
+| GET | `/api/lots` | Список лотов | Нет |
+| GET | `/api/lots/{id}` | Детали лота | Нет |
+| POST | `/api/lots` | Создать лот | Admin |
+| POST | `/api/lots/{id}/bids` | Сделать ставку | Auth |
+| GET | `/api/lots/{id}/bids` | История ставок | Нет |
+
+---
+
+## Планы развития
+
+1. **SignalR** — real-time обновление цены и статуса лотов
+2. **Bid placement** — полноценная форма ставок с валидацией
+3. **SEO** — динамический sitemap, meta tags для каждого лота
+4. **Notifications** — интеграция с Notifications Service
+5. **Изображения** — загрузка и отображение фото лотов
+6. **Фильтры** — поиск, сортировка, категории
+
+---
+
+**Автор:** Коля (jinxinzero7)
+**Дипломный проект, 2026**
