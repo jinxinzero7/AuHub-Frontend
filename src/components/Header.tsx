@@ -5,11 +5,29 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Sun, Moon, Search, User, LogOut } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import NotificationBell from "./NotificationBell";
 
 export default function Header() {
   const { user, isAuthenticated, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
+
+  const handleSearch = () => {
+    const q = searchQuery.trim();
+    if (q) {
+      router.push(`/?search=${encodeURIComponent(q)}`);
+    } else {
+      router.push("/");
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-surface border-b border-border transition-colors duration-250">
@@ -23,21 +41,27 @@ export default function Header() {
           <Link href="/" className="text-[13.5px] text-text2 hover:text-text border-b-2 border-transparent hover:border-gold transition-colors duration-150">
             Аукционы
           </Link>
-          {isAuthenticated && user?.role === 1 && (
+          {isAuthenticated && (
             <Link href="/lots/create" className="text-[13.5px] text-text2 hover:text-text border-b-2 border-transparent hover:border-gold transition-colors duration-150">
               Создать лот
+            </Link>
+          )}
+          {isAuthenticated && user?.role === 1 && (
+            <Link href="/admin" className="text-[13.5px] text-text2 hover:text-text border-b-2 border-transparent hover:border-gold transition-colors duration-150">
+              Админ
             </Link>
           )}
         </nav>
 
         <div className="ml-auto flex items-center gap-2.5">
           <div className="hidden sm:flex items-center gap-1.5 bg-bg2 border border-border rounded-[7px] px-3 py-1.5 w-[210px] transition-colors focus-within:border-gold">
-            <Search className="w-[15px] h-[15px] text-text3 shrink-0" />
+            <Search className="w-[15px] h-[15px] text-text3 shrink-0 cursor-pointer" onClick={handleSearch} />
             <input
               type="text"
               placeholder="Поиск лотов…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
               className="bg-transparent border-none outline-none text-[13px] text-text placeholder:text-text3 w-full font-ui"
             />
           </div>
@@ -56,6 +80,7 @@ export default function Header() {
 
           {isAuthenticated ? (
             <>
+              <NotificationBell />
               <Link
                 href="/profile"
                 className="w-[34px] h-[34px] rounded-[7px] border border-border bg-surface text-text2 hover:bg-bg2 hover:border-border2 transition-colors flex items-center justify-center"

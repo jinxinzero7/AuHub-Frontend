@@ -10,13 +10,23 @@ interface SignalRMessage {
   timestamp: string;
 }
 
-interface UseSignalROptions {
-  lotId?: string;
-  onNewBid?: (message: SignalRMessage) => void;
-  onLotCompleted?: (message: { lotId: string; winnerName: string; finalPrice: number }) => void;
+interface NotificationMessage {
+  userId: string;
+  type: string;
+  message: string;
+  lotId: string | null;
+  timestamp: string;
 }
 
-export function useSignalR({ lotId, onNewBid, onLotCompleted }: UseSignalROptions = {}) {
+interface UseSignalROptions {
+  lotId?: string;
+  userId?: string;
+  onNewBid?: (message: SignalRMessage) => void;
+  onLotCompleted?: (message: { lotId: string; winnerName: string; finalPrice: number }) => void;
+  onNewNotification?: (message: NotificationMessage) => void;
+}
+
+export function useSignalR({ lotId, userId, onNewBid, onLotCompleted, onNewNotification }: UseSignalROptions = {}) {
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const connectionRef = useRef<signalR.HubConnection | null>(null);
@@ -34,7 +44,11 @@ export function useSignalR({ lotId, onNewBid, onLotCompleted }: UseSignalROption
     connectionRef.current = connection;
 
     connection.onreconnecting(() => setConnected(false));
-    connection.onreconnected(() => setConnected(true));
+    connection.onreconnected(() => {
+      setConnected(true);
+      if (lotId) connection.invoke("JoinLotGroup", lotId);
+      if (userId) connection.invoke("JoinUserGroup", userId);
+    });
     connection.onclose(() => {
       setConnected(false);
       startedRef.current = false;
@@ -56,14 +70,24 @@ export function useSignalR({ lotId, onNewBid, onLotCompleted }: UseSignalROption
       });
     }
 
+    if (onNewNotification) {
+      connection.on("NewNotification", (message: NotificationMessage) => {
+        onNewNotification(message);
+      });
+    }
+
     startedRef.current = true;
     connection.start()
-      .then(() => setConnected(true))
+      .then(() => {
+        setConnected(true);
+        if (lotId) connection.invoke("JoinLotGroup", lotId);
+        if (userId) connection.invoke("JoinUserGroup", userId);
+      })
       .catch((err) => {
         setError(err.message);
         startedRef.current = false;
       });
-  }, [lotId, onNewBid, onLotCompleted]);
+  }, [lotId, userId, onNewBid, onLotCompleted, onNewNotification]);
 
   const disconnect = useCallback(() => {
     if (connectionRef.current) {

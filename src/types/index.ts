@@ -61,8 +61,7 @@ export interface CreateLotRequest {
   title: string;
   description: string;
   startingPrice: number;
-  startTime: string;
-  endTime: string;
+  durationHours: number;
 }
 
 export interface PlaceBidRequest {
@@ -80,4 +79,38 @@ export interface ApiResponse<T> {
   success: boolean;
   error: string | null;
   data?: T;
+}
+
+export interface MyBidItem {
+  id: string;
+  amount: number;
+  placedAt: string;
+}
+
+export interface MyBidsGroup {
+  lotId: string;
+  lotTitle: string;
+  lotStatus: string;
+  bids: MyBidItem[];
+}
+
+export interface GetMyBidsResponse {
+  items: MyBidsGroup[];
+}
+
+export interface BalanceResponse {
+  balance: number;
+  frozenBalance: number;
+}
+
+export interface TransactionItem {
+  id: string;
+  type: string;
+  amount: number;
+  createdAt: string;
+  description: string;
+}
+
+export interface TopUpRequest {
+  amount: number;
 }
