@@ -1,3 +1,4 @@
+import { cache } from "react";
 import Header from "@/components/Header";
 import LotDetailClient from "@/components/LotDetailClient";
 import api from "@/lib/api";
@@ -15,43 +16,25 @@ interface LotImage {
   uploadedAt: string;
 }
 
-async function getLot(id: string): Promise<Lot | null> {
-  try {
-    const response = await api.get(`/api/lots/${id}`);
-    return response.data || null;
-  } catch (err) {
-    console.error(`Failed to fetch lot ${id}:`, err);
-    return null;
-  }
-}
-
-async function getBids(id: string): Promise<Bid[]> {
-  try {
-    const response = await api.get(`/api/lots/${id}/bids`);
-    return response.data?.bids || [];
-  } catch (err) {
-    console.error(`Failed to fetch bids for lot ${id}:`, err);
-    return [];
-  }
-}
-
-async function getImages(id: string): Promise<LotImage[]> {
-  try {
-    const response = await api.get(`/api/lots/${id}/images`);
-    return response.data || [];
-  } catch (err) {
-    console.error(`Failed to fetch images for lot ${id}:`, err);
-    return [];
-  }
-}
+const getLotData = cache(async (id: string) => {
+  const [lotRes, imagesRes, bidsRes] = await Promise.all([
+    api.get(`/api/lots/${id}`),
+    api.get(`/api/lots/${id}/images`),
+    api.get(`/api/lots/${id}/bids`),
+  ]);
+  return {
+    lot: (lotRes.data || null) as Lot | null,
+    images: (imagesRes.data || []) as LotImage[],
+    bids: ((bidsRes.data as { bids?: Bid[] })?.bids || []) as Bid[],
+  };
+});
 
 export async function generateMetadata(
   { params }: { params: Promise<{ id: string }> },
   parent: ResolvingMetadata
 ): Promise<Metadata> {
   const { id } = await params;
-  const lot = await getLot(id);
-  const images = await getImages(id);
+  const { lot, images } = await getLotData(id);
 
   if (!lot) {
     return {
@@ -95,11 +78,7 @@ export default async function LotDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [lot, bids, images] = await Promise.all([
-    getLot(id),
-    getBids(id),
-    getImages(id),
-  ]);
+  const { lot, bids, images } = await getLotData(id);
 
   if (!lot) {
     return (
