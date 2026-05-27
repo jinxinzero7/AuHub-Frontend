@@ -1,4 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import { API_ENDPOINTS } from "@/lib/constants";
 
 const BROWSER_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 const SERVER_API_URL = process.env.INTERNAL_API_URL || BROWSER_API_URL;
@@ -25,7 +26,7 @@ api.interceptors.response.use(
       const refreshToken = typeof window !== "undefined" ? localStorage.getItem("refreshToken") : null;
       if (refreshToken) {
         try {
-          const { data } = await axios.post(`${typeof window !== "undefined" ? BROWSER_API_URL : SERVER_API_URL}/api/auth/refresh`, {
+          const { data } = await axios.post(`${typeof window !== "undefined" ? BROWSER_API_URL : SERVER_API_URL}${API_ENDPOINTS.AUTH.REFRESH}`, {
             refreshToken,
           });
           if (data.success && data.accessToken) {

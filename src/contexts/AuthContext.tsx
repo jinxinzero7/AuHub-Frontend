@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
+import { JWT_CLAIMS, API_ENDPOINTS } from "@/lib/constants";
 import type { User, AuthResponse, LoginRequest, RegisterRequest } from "@/types";
 
 interface AuthContextType {
@@ -29,10 +30,10 @@ function decodeJwt(token: string): User | null {
   try {
     const payload = JSON.parse(atob(token.split(".")[1]));
     return {
-      id: payload.sub || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"],
-      email: payload.email || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"],
-      name: payload.name || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"],
-      role: (payload.role || payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]) === "Admin" ? 1 : 0,
+      id: payload.sub || payload[JWT_CLAIMS.ID],
+      email: payload.email || payload[JWT_CLAIMS.EMAIL],
+      name: payload.name || payload[JWT_CLAIMS.NAME],
+      role: (payload.role || payload[JWT_CLAIMS.ROLE]) === "Admin" ? 1 : 0,
     };
   } catch (err) {
     console.warn("Failed to decode JWT token:", err);
@@ -62,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = useCallback(async (data: LoginRequest) => {
-    const response = await api.post<AuthResponse>("/api/auth/login", data);
+    const response = await api.post<AuthResponse>(API_ENDPOINTS.AUTH.LOGIN, data);
     if (response.data.success && response.data.accessToken) {
       localStorage.setItem("accessToken", response.data.accessToken);
       localStorage.setItem("refreshToken", response.data.refreshToken);
@@ -74,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   const register = useCallback(async (data: RegisterRequest) => {
-    const response = await api.post<AuthResponse>("/api/auth/register", data);
+    const response = await api.post<AuthResponse>(API_ENDPOINTS.AUTH.REGISTER, data);
     if (response.data.success && response.data.accessToken) {
       localStorage.setItem("accessToken", response.data.accessToken);
       localStorage.setItem("refreshToken", response.data.refreshToken);
