@@ -36,7 +36,6 @@ export default async function sitemap() {
       lots = data.lots || [];
     }
   } catch {
-    // ignore
   }
 
   const lotRoutes = lots.map((lot) => ({
