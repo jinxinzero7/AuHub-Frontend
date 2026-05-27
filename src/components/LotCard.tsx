@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Heart } from "lucide-react";
 import { useState, useEffect } from "react";
+import { formatPrice, getTimeRemaining, formatTime } from "@/lib/utils";
 
 interface LotCardProps {
   lot: {
@@ -16,33 +17,6 @@ interface LotCardProps {
     bidsCount: number;
     coverImageUrl?: string;
   };
-}
-
-function getTimeRemaining(endTime: string, startTime: string) {
-  const now = new Date().getTime();
-  const end = new Date(endTime).getTime();
-  const start = new Date(startTime).getTime();
-
-  if (now < start) {
-    return { seconds: Math.floor((start - now) / 1000), isLive: false };
-  }
-
-  const remaining = Math.floor((end - now) / 1000);
-  return { seconds: Math.max(0, remaining), isLive: now >= start && now < end };
-}
-
-function formatTime(totalSeconds: number) {
-  const h = Math.floor(totalSeconds / 3600);
-  const m = Math.floor((totalSeconds % 3600) / 60);
-  const s = totalSeconds % 60;
-  if (h > 0) {
-    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  }
-  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-}
-
-function formatPrice(price: number) {
-  return new Intl.NumberFormat("ru-RU").format(price);
 }
 
 const gradients = [

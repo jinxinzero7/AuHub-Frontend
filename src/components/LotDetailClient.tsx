@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSignalR } from "@/hooks/useSignalR";
 import BidForm from "@/components/BidForm";
 import ImageUpload from "@/components/ImageUpload";
+import { formatPrice, formatDate } from "@/lib/utils";
 import api from "@/lib/api";
 import type { Bid } from "@/types";
 
@@ -29,20 +30,6 @@ interface LotDetailClientProps {
   endTime: string;
   initialBids: Bid[];
   initialImages: LotImage[];
-}
-
-function formatPrice(price: number) {
-  return new Intl.NumberFormat("ru-RU").format(price);
-}
-
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleString("ru-RU", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }
 
 export default function LotDetailClient({

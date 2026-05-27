@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
 import type { PlaceBidResponse } from "@/types";
+import { formatPrice } from "@/lib/utils";
 
 interface BidFormProps {
   lotId: string;
@@ -38,7 +39,7 @@ export default function BidForm({ lotId, currentPrice, sellerId, onBidPlaced }: 
 
     const bidAmount = parseFloat(amount);
     if (isNaN(bidAmount) || bidAmount < minBid) {
-      setError(`Минимальная ставка: ₽ ${minBid.toLocaleString("ru-RU")}`);
+      setError(`Минимальная ставка: ₽ ${formatPrice(minBid)}`);
       return;
     }
 
@@ -80,7 +81,7 @@ export default function BidForm({ lotId, currentPrice, sellerId, onBidPlaced }: 
         Сделать ставку
       </h2>
       <p className="text-[13px] text-text2 font-light mb-4">
-        Минимальная ставка: ₽ {minBid.toLocaleString("ru-RU")}
+        Минимальная ставка: ₽ {formatPrice(minBid)}
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -89,7 +90,7 @@ export default function BidForm({ lotId, currentPrice, sellerId, onBidPlaced }: 
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            placeholder={`₽ ${minBid.toLocaleString("ru-RU")}`}
+            placeholder={`₽ ${formatPrice(minBid)}`}
             min={minBid}
             step={100}
             className="w-full bg-bg border border-border rounded-[8px] px-4 py-3 text-[14px] text-text font-mono focus:outline-none focus:border-gold transition-colors"

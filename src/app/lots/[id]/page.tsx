@@ -4,6 +4,7 @@ import api from "@/lib/api";
 import type { Lot, Bid } from "@/types";
 import Link from "next/link";
 import type { Metadata, ResolvingMetadata } from "next";
+import { formatPrice } from "@/lib/utils";
 
 interface LotImage {
   id: string;
@@ -65,7 +66,7 @@ export async function generateMetadata(
     lot.status === "Completed" ? "Аукцион завершён" :
     lot.status === "Draft" ? "Черновик" : lot.status;
 
-  const title = `${lot.title} — Текущая ставка: ₽${lot.currentPrice.toLocaleString("ru-RU")} | AuHub`;
+  const title = `${lot.title} — Текущая ставка: ₽${formatPrice(lot.currentPrice)} | AuHub`;
   const description = `${statusLabel}. ${lot.description.slice(0, 150)}${lot.description.length > 150 ? "..." : ""}`;
 
   const previousImages = (await parent).openGraph?.images || [];

@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import api from "@/lib/api";
 import { User as UserIcon, LogOut, Plus } from "lucide-react";
 import type { Lot, MyBidsGroup, BalanceResponse, TransactionItem } from "@/types";
+import { formatDate } from "@/lib/utils";
 
 type Tab = "lots" | "bids" | "wins" | "balance";
 
@@ -162,7 +163,7 @@ function MyBidsTab() {
           </div>
           {g.bids.map((b) => (
             <div key={b.id} className="flex items-center justify-between py-1 text-[13px]">
-              <span className="text-text2">{new Date(b.placedAt).toLocaleString("ru-RU")}</span>
+              <span className="text-text2">{formatDate(b.placedAt)}</span>
               <span className="text-text font-medium">{b.amount} ₽</span>
             </div>
           ))}
