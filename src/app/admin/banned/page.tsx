@@ -19,7 +19,7 @@ export default function BannedPage() {
     setLoading(true);
     api.get("/api/admin/users/banned")
       .then((res) => setUsers(Array.isArray(res.data) ? res.data : []))
-      .catch(() => {})
+      .catch((err) => console.error("Failed to fetch banned users:", err))
       .finally(() => setLoading(false));
   };
 
@@ -29,7 +29,9 @@ export default function BannedPage() {
     try {
       await api.post(`/api/admin/users/${userId}/unban`);
       setUsers((prev) => prev.filter((u) => u.userId !== userId));
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.error(`Failed to unban user ${userId}:`, err);
+    }
   };
 
   if (loading) return <div className="text-center py-12 text-text3 text-[13px]">Загрузка...</div>;

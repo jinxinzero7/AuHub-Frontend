@@ -56,8 +56,8 @@ export default function NotificationsPage() {
       const items = data.notifications ?? data.items ?? data ?? [];
       setNotifications(Array.isArray(items) ? items : []);
       setTotalPages(data.totalPages ?? data.total_pages ?? 1);
-    } catch {
-      // Ignore
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err);
     } finally {
       setLoading(false);
     }
@@ -74,8 +74,8 @@ export default function NotificationsPage() {
     for (const n of unread) {
       try {
         await api.post(`/api/notifications/${n.id}/read`);
-      } catch {
-        // Ignore per-item errors
+      } catch (err) {
+        console.error(`Failed to mark notification ${n.id} as read:`, err);
       }
     }
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));

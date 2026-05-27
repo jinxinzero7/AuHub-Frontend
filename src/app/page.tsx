@@ -16,7 +16,8 @@ async function getLots(page: number, search?: string): Promise<PaginatedResponse
     }
     const response = await api.get("/api/lots", { params });
     return response.data;
-  } catch {
+  } catch (err) {
+    console.error("Failed to fetch lots:", err);
     return { success: false, lots: [], page, pageSize: PAGE_SIZE, totalCount: 0, totalPages: 0, error: null };
   }
 }

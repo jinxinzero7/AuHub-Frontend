@@ -18,7 +18,8 @@ async function getLot(id: string): Promise<Lot | null> {
   try {
     const response = await api.get(`/api/lots/${id}`);
     return response.data || null;
-  } catch {
+  } catch (err) {
+    console.error(`Failed to fetch lot ${id}:`, err);
     return null;
   }
 }
@@ -27,7 +28,8 @@ async function getBids(id: string): Promise<Bid[]> {
   try {
     const response = await api.get(`/api/lots/${id}/bids`);
     return response.data?.bids || [];
-  } catch {
+  } catch (err) {
+    console.error(`Failed to fetch bids for lot ${id}:`, err);
     return [];
   }
 }
@@ -36,7 +38,8 @@ async function getImages(id: string): Promise<LotImage[]> {
   try {
     const response = await api.get(`/api/lots/${id}/images`);
     return response.data || [];
-  } catch {
+  } catch (err) {
+    console.error(`Failed to fetch images for lot ${id}:`, err);
     return [];
   }
 }

@@ -28,8 +28,8 @@ export default function NotificationBell() {
     try {
       const res = await api.get("/api/notifications/unread-count");
       setUnreadCount(res.data.count ?? res.data.unreadCount ?? 0);
-    } catch {
-      // Ignore fetch errors
+    } catch (err) {
+      console.error("Failed to fetch unread count:", err);
     }
   };
 
@@ -38,8 +38,8 @@ export default function NotificationBell() {
       const res = await api.get("/api/notifications?pageSize=5");
       const items = res.data.notifications ?? res.data.items ?? res.data ?? [];
       setRecentNotifications(Array.isArray(items) ? items : []);
-    } catch {
-      // Ignore fetch errors
+    } catch (err) {
+      console.error("Failed to fetch recent notifications:", err);
     }
   };
 
@@ -76,8 +76,8 @@ export default function NotificationBell() {
         prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
       );
       setUnreadCount((c) => Math.max(0, c - 1));
-    } catch {
-      // Ignore
+    } catch (err) {
+      console.error(`Failed to mark notification ${id} as read:`, err);
     }
   };
 

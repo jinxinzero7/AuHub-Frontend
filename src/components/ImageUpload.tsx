@@ -119,7 +119,8 @@ export default function ImageUpload({ lotId, existingImages = [], onImagesChange
       const newImages = images.filter((img) => img.id !== imageId);
       setImages(newImages);
       onImagesChange?.(newImages);
-    } catch {
+    } catch (err) {
+      console.error(`Failed to delete image ${imageId}:`, err);
       setError("Ошибка удаления изображения");
     }
   }, [lotId, images, onImagesChange]);

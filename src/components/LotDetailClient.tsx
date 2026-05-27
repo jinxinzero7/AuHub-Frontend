@@ -100,7 +100,8 @@ export default function LotDetailClient({
     try {
       await api.post(`/api/lots/${lotId}/publish`);
       window.location.reload();
-    } catch {
+    } catch (err) {
+      console.error("Failed to publish lot:", err);
       setNewBidNotification("Ошибка публикации лота");
       setTimeout(() => setNewBidNotification(null), 3000);
     }

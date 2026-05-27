@@ -22,7 +22,7 @@ export default function ModerationPage() {
     setLoading(true);
     api.get("/api/admin/lots/pending")
       .then((res) => setLots(Array.isArray(res.data) ? res.data : []))
-      .catch(() => {})
+      .catch((err) => console.error("Failed to fetch pending lots:", err))
       .finally(() => setLoading(false));
   };
 
@@ -32,7 +32,9 @@ export default function ModerationPage() {
     try {
       await api.post(`/api/lots/${id}/approve`);
       setLots((prev) => prev.filter((l) => l.id !== id));
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.error(`Failed to approve lot ${id}:`, err);
+    }
   };
 
   const reject = async (id: string) => {
@@ -41,7 +43,9 @@ export default function ModerationPage() {
     try {
       await api.post(`/api/lots/${id}/reject`, { reason });
       setLots((prev) => prev.filter((l) => l.id !== id));
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.error(`Failed to reject lot ${id}:`, err);
+    }
   };
 
   if (loading) return <div className="text-center py-12 text-text3 text-[13px]">Загрузка...</div>;

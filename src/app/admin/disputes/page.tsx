@@ -21,7 +21,7 @@ export default function DisputesPage() {
     setLoading(true);
     api.get("/api/admin/disputes")
       .then((res) => setLots(Array.isArray(res.data) ? res.data : []))
-      .catch(() => {})
+      .catch((err) => console.error("Failed to fetch disputes:", err))
       .finally(() => setLoading(false));
   };
 
@@ -32,7 +32,9 @@ export default function DisputesPage() {
     try {
       await api.post(`/api/lots/${id}/resolve-dispute`, { inFavorOfBuyer });
       setLots((prev) => prev.filter((l) => l.id !== id));
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.error(`Failed to resolve dispute for lot ${id}:`, err);
+    }
     finally { setResolving(null); }
   };
 

@@ -105,7 +105,7 @@ function MyLotsTab({ userId }: { userId: string }) {
   useEffect(() => {
     api.get(`/api/lots?sellerId=${userId}&includeDrafts=true`)
       .then((res) => setLots(res.data.lots ?? []))
-      .catch(() => {})
+      .catch((err) => console.error("Failed to fetch my lots:", err))
       .finally(() => setLoading(false));
   }, [userId]);
 
@@ -143,7 +143,7 @@ function MyBidsTab() {
   useEffect(() => {
     api.get("/api/bids/my")
       .then((res) => setGroups(res.data.items ?? []))
-      .catch(() => {})
+      .catch((err) => console.error("Failed to fetch my bids:", err))
       .finally(() => setLoading(false));
   }, []);
 
@@ -179,7 +179,7 @@ function MyWinsTab({ userId }: { userId: string }) {
   useEffect(() => {
     api.get(`/api/lots?winnerId=${userId}`)
       .then((res) => setLots(res.data.lots ?? []))
-      .catch(() => {})
+      .catch((err) => console.error("Failed to fetch my wins:", err))
       .finally(() => setLoading(false));
   }, [userId]);
 
@@ -219,14 +219,18 @@ function BalanceTab() {
     try {
       const res = await api.get("/api/payment/balance");
       setBalance(res.data);
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.error("Failed to fetch balance:", err);
+    }
   };
 
   const fetchTransactions = async () => {
     try {
       const res = await api.get("/api/payment/transactions");
       setTransactions(res.data.transactions ?? res.data.items ?? []);
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.error("Failed to fetch transactions:", err);
+    }
   };
 
   useEffect(() => {
@@ -242,8 +246,9 @@ function BalanceTab() {
       setTopUpAmount("");
       await fetchBalance();
       await fetchTransactions();
-    } catch { /* ignore */ }
-    finally { setTopUpLoading(false); }
+    } catch (err) {
+      console.error("Failed to top up:", err);
+    } finally { setTopUpLoading(false); }
   };
 
   if (loading) return <div className="text-center py-8 text-text3 text-[13px]">Загрузка...</div>;

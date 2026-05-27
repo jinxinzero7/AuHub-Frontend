@@ -19,7 +19,7 @@ export default function FrozenPage() {
     setLoading(true);
     api.get("/api/admin/lots/frozen")
       .then((res) => setLots(Array.isArray(res.data) ? res.data : []))
-      .catch(() => {})
+      .catch((err) => console.error("Failed to fetch frozen lots:", err))
       .finally(() => setLoading(false));
   };
 
@@ -29,7 +29,9 @@ export default function FrozenPage() {
     try {
       await api.post(`/api/lots/${id}/unfreeze`);
       setLots((prev) => prev.filter((l) => l.id !== id));
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.error(`Failed to unfreeze lot ${id}:`, err);
+    }
   };
 
   if (loading) return <div className="text-center py-12 text-text3 text-[13px]">Загрузка...</div>;

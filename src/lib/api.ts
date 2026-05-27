@@ -39,7 +39,8 @@ api.interceptors.response.use(
               return axios(config);
             }
           }
-        } catch {
+        } catch (err) {
+          console.warn("Token refresh failed:", err);
           localStorage.removeItem("accessToken");
           localStorage.removeItem("refreshToken");
           if (typeof window !== "undefined") {
