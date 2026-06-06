@@ -37,6 +37,7 @@ export interface Lot {
   updatedAt: string;
   bidsCount: number;
   coverImageUrl?: string;
+  supportedDeliveryProviders: string[];
 }
 
 export interface Bid {
@@ -62,6 +63,7 @@ export interface CreateLotRequest {
   description: string;
   startingPrice: number;
   durationHours: number;
+  supportedDeliveryProviders: string[];
 }
 
 export interface PlaceBidRequest {

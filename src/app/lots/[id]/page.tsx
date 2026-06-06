@@ -112,6 +112,7 @@ export default async function LotDetailPage({
             status={lot.status}
             startTime={lot.startTime}
             endTime={lot.endTime}
+            supportedDeliveryProviders={lot.supportedDeliveryProviders ?? []}
             initialBids={bids}
             initialImages={images}
           />

@@ -17,8 +17,15 @@ interface LotCardProps {
     status: string;
     bidsCount: number;
     coverImageUrl?: string;
+    supportedDeliveryProviders?: string[];
   };
 }
+
+const deliveryProviderLabels: Record<string, string> = {
+  Cdek: "СДЭК",
+  YandexDelivery: "Яндекс",
+  RussianPost: "Почта",
+};
 
 const gradients = [
   "linear-gradient(135deg, #1C2535 0%, #2A3545 100%)",
@@ -99,6 +106,15 @@ export default function LotCard({ lot }: LotCardProps) {
         <h3 className="text-[13.5px] font-medium text-text mb-[11px] font-heading leading-[1.4] min-h-[38px] line-clamp-2">
           {lot.title}
         </h3>
+        {lot.supportedDeliveryProviders && lot.supportedDeliveryProviders.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-[10px]">
+            {lot.supportedDeliveryProviders.map((provider) => (
+              <span key={provider} className="text-[10px] px-1.5 py-[2px] rounded bg-bg2 text-text2 border border-border">
+                {deliveryProviderLabels[provider] ?? provider}
+              </span>
+            ))}
+          </div>
+        )}
 
         <div className="flex items-end justify-between pt-[10px] border-t border-border">
           <div>

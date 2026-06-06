@@ -29,6 +29,7 @@ interface LotDetailClientProps {
   status: string;
   startTime: string;
   endTime: string;
+  supportedDeliveryProviders: string[];
   initialBids: Bid[];
   initialImages: LotImage[];
 }
@@ -43,6 +44,7 @@ export default function LotDetailClient({
   status,
   startTime,
   endTime,
+  supportedDeliveryProviders,
   initialBids,
   initialImages,
 }: LotDetailClientProps) {
@@ -96,6 +98,11 @@ export default function LotDetailClient({
   }, [lotId]);
 
   const coverImage = images.length > 0 ? images[0].url : null;
+  const deliveryProviderLabels: Record<string, string> = {
+    Cdek: "СДЭК",
+    YandexDelivery: "Яндекс Доставка",
+    RussianPost: "Почта России",
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -164,6 +171,19 @@ export default function LotDetailClient({
               <span className="ml-2 text-text font-medium">{formatDate(endTime)}</span>
             </div>
           </div>
+
+          {supportedDeliveryProviders.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-border">
+              <div className="text-[12px] text-text2 font-light mb-2">Доставка:</div>
+              <div className="flex flex-wrap gap-2">
+                {supportedDeliveryProviders.map((provider) => (
+                  <span key={provider} className="text-[12px] px-2 py-1 rounded-[6px] bg-bg2 text-text border border-border">
+                    {deliveryProviderLabels[provider] ?? provider}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           {isSeller && status === "Draft" && (
             <button

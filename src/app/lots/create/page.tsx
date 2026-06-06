@@ -14,6 +14,12 @@ const DURATION_PRESETS = [
   { label: "7 дней", hours: 168 },
 ];
 
+const DELIVERY_PROVIDERS = [
+  { value: "Cdek", label: "СДЭК" },
+  { value: "YandexDelivery", label: "Яндекс Доставка" },
+  { value: "RussianPost", label: "Почта России" },
+];
+
 export default function CreateLotPage() {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
@@ -21,6 +27,7 @@ export default function CreateLotPage() {
   const [description, setDescription] = useState("");
   const [startingPrice, setStartingPrice] = useState("");
   const [durationHours, setDurationHours] = useState(48);
+  const [supportedDeliveryProviders, setSupportedDeliveryProviders] = useState<string[]>(["Cdek"]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -52,6 +59,9 @@ export default function CreateLotPage() {
     if (titleErr) newErrors.title = titleErr;
     if (descErr) newErrors.description = descErr;
     if (priceErr) newErrors.startingPrice = priceErr;
+    if (supportedDeliveryProviders.length === 0) {
+      newErrors.supportedDeliveryProviders = "Выберите хотя бы одну службу доставки";
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -67,6 +77,7 @@ export default function CreateLotPage() {
         description,
         startingPrice: parseFloat(startingPrice),
         durationHours,
+        supportedDeliveryProviders,
       });
       router.push("/");
     } catch (err: unknown) {
@@ -88,6 +99,15 @@ export default function CreateLotPage() {
 
   const fieldClass = (field: string) =>
     `w-full px-3 py-2.5 text-[14px] bg-bg2 border rounded-[7px] text-text placeholder:text-text3 outline-none transition-colors font-ui ${errors[field] ? "border-danger" : "border-border focus:border-gold"}`;
+
+  const toggleDeliveryProvider = (provider: string) => {
+    setSupportedDeliveryProviders((prev) =>
+      prev.includes(provider)
+        ? prev.filter((item) => item !== provider)
+        : [...prev, provider]
+    );
+    setErrors((prev) => ({ ...prev, supportedDeliveryProviders: "" }));
+  };
 
   return (
     <>
@@ -171,6 +191,35 @@ export default function CreateLotPage() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-[13px] font-medium text-text2 mb-2">
+                  Службы доставки
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {DELIVERY_PROVIDERS.map((provider) => (
+                    <label
+                      key={provider.value}
+                      className={`flex items-center gap-2 px-3 py-2.5 rounded-[7px] border text-[13px] font-ui cursor-pointer transition-colors ${
+                        supportedDeliveryProviders.includes(provider.value)
+                          ? "bg-gold-light text-text border-gold"
+                          : "bg-bg2 text-text2 border-border hover:border-gold"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={supportedDeliveryProviders.includes(provider.value)}
+                        onChange={() => toggleDeliveryProvider(provider.value)}
+                        className="h-4 w-4 accent-gold"
+                      />
+                      <span>{provider.label}</span>
+                    </label>
+                  ))}
+                </div>
+                {errors.supportedDeliveryProviders && (
+                  <p className="text-[12px] text-danger mt-1">{errors.supportedDeliveryProviders}</p>
+                )}
               </div>
 
               <button
