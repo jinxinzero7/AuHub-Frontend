@@ -84,13 +84,13 @@ export default function LotDetailClient({
     setCurrentPrice(newPrice);
   }, []);
 
-  const handlePublish = useCallback(async () => {
+  const handleSubmitForModeration = useCallback(async () => {
     try {
-      await api.post(`/api/lots/${lotId}/publish`);
+      await api.post(`/api/lots/${lotId}/submit-for-moderation`);
       window.location.reload();
     } catch (err) {
-      console.error("Failed to publish lot:", err);
-      setNewBidNotification("Ошибка публикации лота");
+      console.error("Failed to submit lot for moderation:", err);
+      setNewBidNotification("Ошибка отправки лота на модерацию");
       setTimeout(() => setNewBidNotification(null), 3000);
     }
   }, [lotId]);
@@ -167,10 +167,10 @@ export default function LotDetailClient({
 
           {isSeller && status === "Draft" && (
             <button
-              onClick={handlePublish}
+              onClick={handleSubmitForModeration}
               className="mt-4 w-full bg-gold hover:bg-gold-hover text-bg font-medium py-3 rounded-[8px] transition-colors"
             >
-              Опубликовать лот
+              Отправить на модерацию
             </button>
           )}
         </div>

@@ -17,7 +17,7 @@ export const API_ENDPOINTS = {
     BIDS: (id: string) => `/api/lots/${id}/bids`,
     IMAGES: (id: string) => `/api/lots/${id}/images`,
     CREATE: '/api/lots',
-    PUBLISH: (id: string) => `/api/lots/${id}/publish`,
+    SUBMIT_FOR_MODERATION: (id: string) => `/api/lots/${id}/submit-for-moderation`,
     APPROVE: (id: string) => `/api/lots/${id}/approve`,
     REJECT: (id: string) => `/api/lots/${id}/reject`,
     UNFREEZE: (id: string) => `/api/lots/${id}/unfreeze`,

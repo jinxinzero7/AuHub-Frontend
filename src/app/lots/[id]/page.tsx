@@ -47,6 +47,7 @@ export async function generateMetadata(
   const statusLabel =
     lot.status === "Active" ? "Аукцион активен" :
     lot.status === "Completed" ? "Аукцион завершён" :
+    lot.status === "PendingModeration" ? "Лот на модерации" :
     lot.status === "Draft" ? "Черновик" : lot.status;
 
   const title = `${lot.title} — Текущая ставка: ₽${formatPrice(lot.currentPrice)} | AuHub`;

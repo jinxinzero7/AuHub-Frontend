@@ -68,6 +68,10 @@ export default function LotCard({ lot }: LotCardProps) {
             <span className="text-[10px] font-medium px-2 py-[3px] rounded bg-[rgba(184,136,46,0.2)] text-gold tracking-[0.2px]">
               Черновик
             </span>
+          ) : lot.status === "PendingModeration" ? (
+            <span className="text-[10px] font-medium px-2 py-[3px] rounded bg-[rgba(184,136,46,0.2)] text-gold tracking-[0.2px]">
+              На модерации
+            </span>
           ) : (
             <span className="text-[10px] font-medium px-2 py-[3px] rounded bg-[rgba(184,136,46,0.2)] text-gold tracking-[0.2px]">
               Завершён

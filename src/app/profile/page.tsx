@@ -124,7 +124,7 @@ function MyLotsTab({ userId }: { userId: string }) {
             <span className={`px-2 py-0.5 rounded text-[11px] font-medium ${
               lot.status === "Active" ? "bg-green-100 text-green-700" :
               lot.status === "Draft" ? "bg-gray-100 text-gray-600" :
-              lot.status === "Pending" ? "bg-yellow-100 text-yellow-700" :
+              lot.status === "PendingModeration" ? "bg-yellow-100 text-yellow-700" :
               lot.status === "Completed" ? "bg-blue-100 text-blue-700" :
               "bg-gray-100 text-gray-600"
             }`}>{lot.status}</span>
@@ -196,7 +196,7 @@ function MyWinsTab({ userId }: { userId: string }) {
           <div className="text-[14px] font-medium text-text mb-1">{lot.title}</div>
           <div className="flex items-center gap-3 text-[12px] text-text2">
             <span className={`px-2 py-0.5 rounded text-[11px] font-medium ${
-              lot.status === "PendingShipment" ? "bg-yellow-100 text-yellow-700" :
+              lot.status === "ShippingPending" ? "bg-yellow-100 text-yellow-700" :
               lot.status === "Shipped" ? "bg-blue-100 text-blue-700" :
               lot.status === "Delivered" ? "bg-green-100 text-green-700" :
               "bg-gray-100 text-gray-600"
