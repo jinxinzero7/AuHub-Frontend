@@ -10,7 +10,6 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [role, setRole] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -36,7 +35,7 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      await register({ email, password, name, role });
+      await register({ email, password, name, role: 0 });
     } catch (err: unknown) {
       if (err instanceof Error && "response" in err) {
         const axiosErr = err as { response?: { data?: { errors?: { generalErrors?: string[] } } } };
@@ -111,21 +110,6 @@ export default function RegisterPage() {
                 placeholder="Минимум 8 символов"
               />
               {errors.password && <p className="text-[12px] text-danger mt-1">{errors.password}</p>}
-            </div>
-
-            <div>
-              <label htmlFor="role" className="block text-[13px] font-medium text-text2 mb-1.5">
-                Роль
-              </label>
-              <select
-                id="role"
-                value={role}
-                onChange={(e) => setRole(Number(e.target.value))}
-                className="w-full px-3 py-2.5 text-[14px] bg-bg2 border border-border rounded-[7px] text-text outline-none focus:border-gold transition-colors font-ui cursor-pointer"
-              >
-                <option value={0}>Участник</option>
-                <option value={1}>Администратор</option>
-              </select>
             </div>
 
             <button

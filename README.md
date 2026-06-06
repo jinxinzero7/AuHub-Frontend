@@ -115,7 +115,8 @@ npm run lint      # ESLint
 Current verified state:
 - `npm run build` passes without Google Fonts network dependency;
 - `npm run lint` passes with 0 errors and 0 warnings;
-- fonts are CSS system stacks defined in `src/app/globals.css`.
+- fonts are CSS system stacks defined in `src/app/globals.css`;
+- public registration no longer exposes Admin role selection.
 
 ---
 
