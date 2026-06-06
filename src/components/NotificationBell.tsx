@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Bell } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,16 +24,16 @@ export default function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const fetchUnreadCount = async () => {
+  const fetchUnreadCount = useCallback(async () => {
     try {
       const res = await api.get("/api/notifications/unread-count");
       setUnreadCount(res.data.count ?? res.data.unreadCount ?? 0);
     } catch (err) {
       console.error("Failed to fetch unread count:", err);
     }
-  };
+  }, []);
 
-  const fetchRecent = async () => {
+  const fetchRecent = useCallback(async () => {
     try {
       const res = await api.get("/api/notifications?pageSize=5");
       const items = res.data.notifications ?? res.data.items ?? res.data ?? [];
@@ -41,7 +41,7 @@ export default function NotificationBell() {
     } catch (err) {
       console.error("Failed to fetch recent notifications:", err);
     }
-  };
+  }, []);
 
   useSignalR({
     userId: user?.id,
@@ -53,11 +53,13 @@ export default function NotificationBell() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    fetchUnreadCount();
-    fetchRecent();
+    void Promise.resolve().then(() => {
+      fetchUnreadCount();
+      fetchRecent();
+    });
     const interval = setInterval(fetchUnreadCount, 30000);
     return () => clearInterval(interval);
-  }, [isAuthenticated]);
+  }, [fetchRecent, fetchUnreadCount, isAuthenticated]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {

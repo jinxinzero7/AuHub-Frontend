@@ -26,7 +26,9 @@ export default function ModerationPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchLots(); }, []);
+  useEffect(() => {
+    void Promise.resolve().then(fetchLots);
+  }, []);
 
   const approve = async (id: string) => {
     try {

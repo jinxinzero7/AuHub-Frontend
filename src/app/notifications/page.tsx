@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSignalR } from "@/hooks/useSignalR";
 import Header from "@/components/Header";
@@ -42,14 +42,7 @@ export default function NotificationsPage() {
   const [filter, setFilter] = useState<"all" | "unread">("all");
   const [loading, setLoading] = useState(true);
 
-  useSignalR({
-    userId: user?.id,
-    onNewNotification: () => {
-      fetchNotifications();
-    },
-  });
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       const res = await api.get(`/api/notifications?page=${page}&pageSize=${PAGE_SIZE}`);
       const data = res.data;
@@ -61,13 +54,20 @@ export default function NotificationsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page]);
+
+  useSignalR({
+    userId: user?.id,
+    onNewNotification: () => {
+      fetchNotifications();
+    },
+  });
 
   useEffect(() => {
     if (isAuthenticated) {
-      fetchNotifications();
+      void Promise.resolve().then(fetchNotifications);
     }
-  }, [isAuthenticated, page]);
+  }, [fetchNotifications, isAuthenticated]);
 
   const markAllAsRead = async () => {
     const unread = notifications.filter((n) => !n.isRead);

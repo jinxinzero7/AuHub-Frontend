@@ -235,7 +235,9 @@ function BalanceTab() {
   };
 
   useEffect(() => {
-    Promise.all([fetchBalance(), fetchTransactions()]).finally(() => setLoading(false));
+    void Promise.resolve().then(() => {
+      Promise.all([fetchBalance(), fetchTransactions()]).finally(() => setLoading(false));
+    });
   }, []);
 
   const handleTopUp = async () => {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSignalR } from "@/hooks/useSignalR";
 import BidForm from "@/components/BidForm";
@@ -68,7 +69,7 @@ export default function LotDetailClient({
     setTimeout(() => setNewBidNotification(null), 3000);
   }, []);
 
-  const handleLotCompleted = useCallback((_message: { lotId: string; winnerName: string; finalPrice: number }) => {
+  const handleLotCompleted = useCallback(() => {
     setNewBidNotification("Аукцион завершён!");
     setTimeout(() => setNewBidNotification(null), 5000);
   }, []);
@@ -101,7 +102,17 @@ export default function LotDetailClient({
       <div>
         <div className="w-full aspect-[4/3] bg-bg2 border border-border rounded-[10px] overflow-hidden mb-4">
           {coverImage ? (
-            <img src={coverImage} alt={title} className="w-full h-full object-cover" />
+            <div className="relative w-full h-full">
+              <Image
+                src={coverImage}
+                alt={title}
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover"
+                priority
+                unoptimized
+              />
+            </div>
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <span className="text-text3 text-[14px] font-light">Изображение лота</span>

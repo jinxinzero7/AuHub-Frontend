@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Sun, Moon, Search, User, LogOut } from "lucide-react";
+import { Sun, Moon, Search, User } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import NotificationBell from "./NotificationBell";

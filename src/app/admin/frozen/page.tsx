@@ -23,7 +23,9 @@ export default function FrozenPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchLots(); }, []);
+  useEffect(() => {
+    void Promise.resolve().then(fetchLots);
+  }, []);
 
   const unfreeze = async (id: string) => {
     try {

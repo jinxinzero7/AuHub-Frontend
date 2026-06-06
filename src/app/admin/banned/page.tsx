@@ -23,7 +23,9 @@ export default function BannedPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchUsers(); }, []);
+  useEffect(() => {
+    void Promise.resolve().then(fetchUsers);
+  }, []);
 
   const unban = async (userId: string) => {
     try {

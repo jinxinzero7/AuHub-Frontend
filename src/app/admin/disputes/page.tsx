@@ -25,7 +25,9 @@ export default function DisputesPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchLots(); }, []);
+  useEffect(() => {
+    void Promise.resolve().then(fetchLots);
+  }, []);
 
   const resolve = async (id: string, inFavorOfBuyer: boolean) => {
     setResolving(id);

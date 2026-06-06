@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Heart } from "lucide-react";
 import { useState, useEffect } from "react";
 import { formatPrice, getTimeRemaining, formatTime } from "@/lib/utils";
@@ -49,11 +50,13 @@ export default function LotCard({ lot }: LotCardProps) {
     <Link href={`/lots/${lot.id}`} className="group bg-surface border border-border rounded-[10px] overflow-hidden hover:border-gold hover:translate-y-[-1px] transition-all duration-200 block">
       <div className="w-full h-[162px] relative overflow-hidden" style={{ background: hasCoverImage ? undefined : gradient }}>
         {hasCoverImage && imageUrl && (
-          <img
+          <Image
             src={imageUrl}
             alt={lot.title}
-            className="w-full h-full object-cover"
-            loading="lazy"
+            fill
+            sizes="(max-width: 768px) 100vw, 320px"
+            className="object-cover"
+            unoptimized
           />
         )}
         <div className="absolute top-[10px] left-[10px]">

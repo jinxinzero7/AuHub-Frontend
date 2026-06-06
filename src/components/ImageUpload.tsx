@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import Image from "next/image";
 import api from "@/lib/api";
 import { Upload, X, Image as ImageIcon } from "lucide-react";
 
@@ -178,12 +179,15 @@ export default function ImageUpload({ lotId, existingImages = [], onImagesChange
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {images.map((image) => (
             <div key={image.id} className="relative group">
-              <div className="aspect-square bg-bg2 border border-border rounded-[8px] overflow-hidden">
+              <div className="relative aspect-square bg-bg2 border border-border rounded-[8px] overflow-hidden">
                 {image.url ? (
-                  <img
+                  <Image
                     src={image.url}
                     alt={image.fileName}
-                    className="w-full h-full object-cover"
+                    fill
+                    sizes="(max-width: 640px) 50vw, 160px"
+                    className="object-cover"
+                    unoptimized
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">

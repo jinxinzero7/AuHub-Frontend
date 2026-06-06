@@ -48,18 +48,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
-      const decoded = decodeJwt(token);
-      if (decoded) {
-        setUser(decoded);
-        setAccessToken(token);
-      } else {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
+    queueMicrotask(() => {
+      const token = localStorage.getItem("accessToken");
+      if (token) {
+        const decoded = decodeJwt(token);
+        if (decoded) {
+          setUser(decoded);
+          setAccessToken(token);
+        } else {
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+        }
       }
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    });
   }, []);
 
   const login = useCallback(async (data: LoginRequest) => {
