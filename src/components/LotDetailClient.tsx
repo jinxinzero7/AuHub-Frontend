@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, type FormEvent } from "react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSignalR } from "@/hooks/useSignalR";
@@ -26,9 +26,12 @@ interface LotDetailClientProps {
   startingPrice: number;
   initialCurrentPrice: number;
   sellerId: string;
+  winnerId?: string;
   status: string;
   startTime: string;
   endTime: string;
+  deliveryRequestDeadlineAt?: string;
+  currentTime: string;
   supportedDeliveryProviders: string[];
   initialBids: Bid[];
   initialImages: LotImage[];
@@ -41,9 +44,12 @@ export default function LotDetailClient({
   startingPrice,
   initialCurrentPrice,
   sellerId,
+  winnerId,
   status,
   startTime,
   endTime,
+  deliveryRequestDeadlineAt,
+  currentTime,
   supportedDeliveryProviders,
   initialBids,
   initialImages,
@@ -54,6 +60,12 @@ export default function LotDetailClient({
   const [bids, setBids] = useState<Bid[]>(initialBids);
   const [images, setImages] = useState<LotImage[]>(initialImages);
   const [newBidNotification, setNewBidNotification] = useState<string | null>(null);
+  const [deliveryProvider, setDeliveryProvider] = useState(supportedDeliveryProviders[0] ?? "");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [recipientName, setRecipientName] = useState(user?.name ?? "");
+  const [recipientPhone, setRecipientPhone] = useState("");
+  const [deliveryError, setDeliveryError] = useState<string | null>(null);
+  const [isRequestingDelivery, setIsRequestingDelivery] = useState(false);
 
   const handleNewBid = useCallback((message: { lotId: string; currentPrice: number; bidderName: string }) => {
     setCurrentPrice(message.currentPrice);
@@ -97,12 +109,47 @@ export default function LotDetailClient({
     }
   }, [lotId]);
 
+  const handleRequestDelivery = useCallback(async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setDeliveryError(null);
+
+    if (!deliveryProvider) {
+      setDeliveryError("Выберите службу доставки");
+      return;
+    }
+
+    if (!deliveryAddress.trim() || !recipientName.trim() || !recipientPhone.trim()) {
+      setDeliveryError("Заполните данные для доставки");
+      return;
+    }
+
+    setIsRequestingDelivery(true);
+    try {
+      await api.post(`/api/lots/${lotId}/delivery-request`, {
+        provider: deliveryProvider,
+        address: deliveryAddress.trim(),
+        recipientName: recipientName.trim(),
+        recipientPhone: recipientPhone.trim(),
+      });
+      window.location.reload();
+    } catch (err) {
+      console.error("Failed to request delivery:", err);
+      setDeliveryError("Не удалось запросить доставку");
+    } finally {
+      setIsRequestingDelivery(false);
+    }
+  }, [deliveryAddress, deliveryProvider, lotId, recipientName, recipientPhone]);
+
   const coverImage = images.length > 0 ? images[0].url : null;
   const deliveryProviderLabels: Record<string, string> = {
     Cdek: "СДЭК",
     YandexDelivery: "Яндекс Доставка",
     RussianPost: "Почта России",
   };
+  const isDeliveryDeadlineExpired = deliveryRequestDeadlineAt
+    ? Date.parse(deliveryRequestDeadlineAt) < Date.parse(currentTime)
+    : false;
+  const canRequestDelivery = user?.id === winnerId && status === "DeliveryRequestPending" && !isDeliveryDeadlineExpired;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -183,6 +230,77 @@ export default function LotDetailClient({
                 ))}
               </div>
             </div>
+          )}
+
+          {canRequestDelivery && (
+            <form onSubmit={handleRequestDelivery} className="mt-5 pt-5 border-t border-border space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="font-heading text-[16px] font-medium text-text">Запросить доставку</h2>
+                {deliveryRequestDeadlineAt && (
+                  <span className="text-[11px] text-text3">
+                    до {formatDate(deliveryRequestDeadlineAt)}
+                  </span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="block text-[12px] text-text2 mb-1">Служба доставки</span>
+                  <select
+                    value={deliveryProvider}
+                    onChange={(event) => setDeliveryProvider(event.target.value)}
+                    className="w-full bg-bg2 border border-border rounded-[7px] px-3 py-2 text-[13px] text-text outline-none focus:border-gold"
+                  >
+                    {supportedDeliveryProviders.map((provider) => (
+                      <option key={provider} value={provider}>
+                        {deliveryProviderLabels[provider] ?? provider}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="block">
+                  <span className="block text-[12px] text-text2 mb-1">Телефон получателя</span>
+                  <input
+                    value={recipientPhone}
+                    onChange={(event) => setRecipientPhone(event.target.value)}
+                    className="w-full bg-bg2 border border-border rounded-[7px] px-3 py-2 text-[13px] text-text outline-none focus:border-gold"
+                    placeholder="+7..."
+                  />
+                </label>
+              </div>
+
+              <label className="block">
+                <span className="block text-[12px] text-text2 mb-1">Получатель</span>
+                <input
+                  value={recipientName}
+                  onChange={(event) => setRecipientName(event.target.value)}
+                  className="w-full bg-bg2 border border-border rounded-[7px] px-3 py-2 text-[13px] text-text outline-none focus:border-gold"
+                />
+              </label>
+
+              <label className="block">
+                <span className="block text-[12px] text-text2 mb-1">ПВЗ или адрес</span>
+                <textarea
+                  value={deliveryAddress}
+                  onChange={(event) => setDeliveryAddress(event.target.value)}
+                  rows={3}
+                  className="w-full bg-bg2 border border-border rounded-[7px] px-3 py-2 text-[13px] text-text outline-none focus:border-gold resize-none"
+                />
+              </label>
+
+              {deliveryError && (
+                <div className="text-[12px] text-danger">{deliveryError}</div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isRequestingDelivery}
+                className="w-full bg-gold hover:bg-gold-hover disabled:opacity-60 disabled:cursor-not-allowed text-bg font-medium py-3 rounded-[8px] transition-colors"
+              >
+                {isRequestingDelivery ? "Отправка..." : "Запросить доставку"}
+              </button>
+            </form>
           )}
 
           {isSeller && status === "Draft" && (

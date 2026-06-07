@@ -109,9 +109,12 @@ export default async function LotDetailPage({
             startingPrice={lot.startingPrice}
             initialCurrentPrice={lot.currentPrice}
             sellerId={lot.sellerId}
+            winnerId={lot.winnerId}
             status={lot.status}
             startTime={lot.startTime}
             endTime={lot.endTime}
+            deliveryRequestDeadlineAt={lot.deliveryRequestDeadlineAt}
+            currentTime={new Date().toISOString()}
             supportedDeliveryProviders={lot.supportedDeliveryProviders ?? []}
             initialBids={bids}
             initialImages={images}

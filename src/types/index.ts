@@ -32,11 +32,15 @@ export interface Lot {
   startTime: string;
   endTime: string;
   sellerId: string;
+  winnerId?: string;
   status: string;
   createdAt: string;
   updatedAt: string;
   bidsCount: number;
   coverImageUrl?: string;
+  selectedDeliveryProvider?: string;
+  deliveryRequestedAt?: string;
+  deliveryRequestDeadlineAt?: string;
   supportedDeliveryProviders: string[];
 }
 
