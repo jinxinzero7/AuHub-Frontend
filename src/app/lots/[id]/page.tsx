@@ -113,6 +113,8 @@ export default async function LotDetailPage({
             status={lot.status}
             startTime={lot.startTime}
             endTime={lot.endTime}
+            trackingNumber={lot.trackingNumber}
+            selectedDeliveryProvider={lot.selectedDeliveryProvider}
             deliveryRequestDeadlineAt={lot.deliveryRequestDeadlineAt}
             currentTime={new Date().toISOString()}
             supportedDeliveryProviders={lot.supportedDeliveryProviders ?? []}

@@ -38,6 +38,7 @@ export interface Lot {
   updatedAt: string;
   bidsCount: number;
   coverImageUrl?: string;
+  trackingNumber?: string;
   selectedDeliveryProvider?: string;
   deliveryRequestedAt?: string;
   deliveryRequestDeadlineAt?: string;

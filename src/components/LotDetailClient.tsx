@@ -30,6 +30,8 @@ interface LotDetailClientProps {
   status: string;
   startTime: string;
   endTime: string;
+  trackingNumber?: string;
+  selectedDeliveryProvider?: string;
   deliveryRequestDeadlineAt?: string;
   currentTime: string;
   supportedDeliveryProviders: string[];
@@ -48,6 +50,8 @@ export default function LotDetailClient({
   status,
   startTime,
   endTime,
+  trackingNumber,
+  selectedDeliveryProvider,
   deliveryRequestDeadlineAt,
   currentTime,
   supportedDeliveryProviders,
@@ -66,6 +70,9 @@ export default function LotDetailClient({
   const [recipientPhone, setRecipientPhone] = useState("");
   const [deliveryError, setDeliveryError] = useState<string | null>(null);
   const [isRequestingDelivery, setIsRequestingDelivery] = useState(false);
+  const [shippingTrackingNumber, setShippingTrackingNumber] = useState("");
+  const [shippingError, setShippingError] = useState<string | null>(null);
+  const [isShipping, setIsShipping] = useState(false);
 
   const handleNewBid = useCallback((message: { lotId: string; currentPrice: number; bidderName: string }) => {
     setCurrentPrice(message.currentPrice);
@@ -140,6 +147,29 @@ export default function LotDetailClient({
     }
   }, [deliveryAddress, deliveryProvider, lotId, recipientName, recipientPhone]);
 
+  const handleShipLot = useCallback(async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setShippingError(null);
+
+    if (!shippingTrackingNumber.trim()) {
+      setShippingError("Введите трек-номер или номер отправления");
+      return;
+    }
+
+    setIsShipping(true);
+    try {
+      await api.post(`/api/lots/${lotId}/ship`, {
+        trackingNumber: shippingTrackingNumber.trim(),
+      });
+      window.location.reload();
+    } catch (err) {
+      console.error("Failed to ship lot:", err);
+      setShippingError("Не удалось отметить лот как отправленный");
+    } finally {
+      setIsShipping(false);
+    }
+  }, [lotId, shippingTrackingNumber]);
+
   const coverImage = images.length > 0 ? images[0].url : null;
   const deliveryProviderLabels: Record<string, string> = {
     Cdek: "СДЭК",
@@ -150,6 +180,7 @@ export default function LotDetailClient({
     ? Date.parse(deliveryRequestDeadlineAt) < Date.parse(currentTime)
     : false;
   const canRequestDelivery = user?.id === winnerId && status === "DeliveryRequestPending" && !isDeliveryDeadlineExpired;
+  const canShipLot = isSeller && status === "ShippingPending";
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -301,6 +332,46 @@ export default function LotDetailClient({
                 {isRequestingDelivery ? "Отправка..." : "Запросить доставку"}
               </button>
             </form>
+          )}
+
+          {canShipLot && (
+            <form onSubmit={handleShipLot} className="mt-5 pt-5 border-t border-border space-y-3">
+              <div>
+                <h2 className="font-heading text-[16px] font-medium text-text">Отправить лот</h2>
+                <p className="text-[12px] text-text2 mt-1">
+                  Покупатель запросил доставку
+                  {selectedDeliveryProvider ? ` через ${deliveryProviderLabels[selectedDeliveryProvider] ?? selectedDeliveryProvider}` : ""}.
+                </p>
+              </div>
+
+              <label className="block">
+                <span className="block text-[12px] text-text2 mb-1">Трек-номер или номер отправления</span>
+                <input
+                  value={shippingTrackingNumber}
+                  onChange={(event) => setShippingTrackingNumber(event.target.value)}
+                  className="w-full bg-bg2 border border-border rounded-[7px] px-3 py-2 text-[13px] text-text outline-none focus:border-gold"
+                />
+              </label>
+
+              {shippingError && (
+                <div className="text-[12px] text-danger">{shippingError}</div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isShipping}
+                className="w-full bg-gold hover:bg-gold-hover disabled:opacity-60 disabled:cursor-not-allowed text-bg font-medium py-3 rounded-[8px] transition-colors"
+              >
+                {isShipping ? "Отправка..." : "Отметить как отправленный"}
+              </button>
+            </form>
+          )}
+
+          {status === "Shipped" && trackingNumber && (
+            <div className="mt-5 pt-5 border-t border-border">
+              <div className="text-[12px] text-text2 font-light mb-1">Отправление:</div>
+              <div className="text-[13px] text-text font-medium">{trackingNumber}</div>
+            </div>
           )}
 
           {isSeller && status === "Draft" && (
