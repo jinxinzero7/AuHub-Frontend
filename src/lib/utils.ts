@@ -2,6 +2,16 @@ export function formatPrice(price: number): string {
   return new Intl.NumberFormat("ru-RU").format(price);
 }
 
+export const SERVICE_FEE_RATE = 0.01;
+
+export function calculateServiceFee(price: number): number {
+  return Math.round(price * SERVICE_FEE_RATE * 100) / 100;
+}
+
+export function calculateSellerPayout(price: number): number {
+  return Math.max(0, Math.round((price - calculateServiceFee(price)) * 100) / 100);
+}
+
 export function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleString("ru-RU", {
     day: "2-digit",

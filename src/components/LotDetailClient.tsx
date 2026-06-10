@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSignalR } from "@/hooks/useSignalR";
 import BidForm from "@/components/BidForm";
 import ImageUpload from "@/components/ImageUpload";
-import { formatPrice, formatDate } from "@/lib/utils";
+import { calculateSellerPayout, calculateServiceFee, formatPrice, formatDate } from "@/lib/utils";
 import api from "@/lib/api";
 import type { Bid } from "@/types";
 
@@ -181,6 +181,8 @@ export default function LotDetailClient({
     : false;
   const canRequestDelivery = user?.id === winnerId && status === "DeliveryRequestPending" && !isDeliveryDeadlineExpired;
   const canShipLot = isSeller && status === "ShippingPending";
+  const serviceFee = calculateServiceFee(currentPrice);
+  const sellerPayout = calculateSellerPayout(currentPrice);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -249,6 +251,19 @@ export default function LotDetailClient({
               <span className="ml-2 text-text font-medium">{formatDate(endTime)}</span>
             </div>
           </div>
+
+          {isSeller && (
+            <div className="mt-4 rounded-[8px] border border-border bg-bg2 px-4 py-3 text-[13px]">
+              <div className="flex items-center justify-between gap-3 text-text2">
+                <span>Комиссия сервиса 1%</span>
+                <span>₽ {formatPrice(serviceFee)}</span>
+              </div>
+              <div className="mt-1 flex items-center justify-between gap-3 text-text font-medium">
+                <span>Вы получите</span>
+                <span>₽ {formatPrice(sellerPayout)}</span>
+              </div>
+            </div>
+          )}
 
           {supportedDeliveryProviders.length > 0 && (
             <div className="mt-4 pt-4 border-t border-border">

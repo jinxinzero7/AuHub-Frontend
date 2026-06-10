@@ -6,7 +6,7 @@ import Header from "@/components/Header";
 import api from "@/lib/api";
 import { User as UserIcon, LogOut, Plus } from "lucide-react";
 import type { Lot, MyBidsGroup, BalanceResponse, TransactionItem } from "@/types";
-import { formatDate } from "@/lib/utils";
+import { calculateSellerPayout, formatDate, formatPrice } from "@/lib/utils";
 
 type Tab = "lots" | "bids" | "wins" | "balance";
 
@@ -139,6 +139,9 @@ function MyLotsTab({ userId }: { userId: string }) {
             }`}>{lotStatusLabel(lot.status)}</span>
             <span>{lot.currentPrice ?? lot.startingPrice} ₽</span>
             <span>{lot.bidsCount ?? 0} ставок</span>
+          </div>
+          <div className="mt-2 text-[12px] text-text3">
+            С учетом комиссии вы получите {formatPrice(calculateSellerPayout(lot.currentPrice ?? lot.startingPrice))} ₽
           </div>
         </a>
       ))}

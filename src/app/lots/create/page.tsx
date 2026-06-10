@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import api from "@/lib/api";
 import { validateLotTitle, validateLotDescription, validateStartingPrice } from "@/lib/validation";
+import { calculateSellerPayout, calculateServiceFee, formatPrice } from "@/lib/utils";
 
 const DURATION_PRESETS = [
   { label: "24 часа", hours: 24 },
@@ -109,6 +110,11 @@ export default function CreateLotPage() {
     setErrors((prev) => ({ ...prev, supportedDeliveryProviders: "" }));
   };
 
+  const startingPriceNumber = Number.parseFloat(startingPrice);
+  const hasPayoutPreview = Number.isFinite(startingPriceNumber) && startingPriceNumber > 0;
+  const serviceFee = hasPayoutPreview ? calculateServiceFee(startingPriceNumber) : 0;
+  const sellerPayout = hasPayoutPreview ? calculateSellerPayout(startingPriceNumber) : 0;
+
   return (
     <>
       <Header />
@@ -169,6 +175,14 @@ export default function CreateLotPage() {
                   placeholder="1000"
                 />
                 {errors.startingPrice && <p className="text-[12px] text-danger mt-1">{errors.startingPrice}</p>}
+                {hasPayoutPreview && (
+                  <div className="mt-2 rounded-[7px] border border-border bg-bg2 px-3 py-2 text-[12px] text-text2">
+                    <div>Комиссия сервиса 1%: ₽ {formatPrice(serviceFee)}</div>
+                    <div className="mt-0.5 text-text font-medium">
+                      С учетом комиссии вы получите ₽ {formatPrice(sellerPayout)}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>

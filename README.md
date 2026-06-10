@@ -116,6 +116,7 @@ Current verified state:
 - `npm run build` passes without Google Fonts network dependency;
 - `npm run lint` passes with 0 errors and 0 warnings;
 - fonts are CSS system stacks defined in `src/app/globals.css`;
+- seller-facing lot creation/detail/profile screens show payout after the 1% service fee;
 - public registration no longer exposes Admin role selection.
 
 ---
