@@ -47,6 +47,7 @@ export async function generateMetadata(
   const statusLabel =
     lot.status === "Active" ? "Аукцион активен" :
     lot.status === "Completed" ? "Аукцион завершён" :
+    lot.status === "CompletedNoWinner" ? "Аукцион завершён без победителя" :
     lot.status === "PendingModeration" ? "Лот на модерации" :
     lot.status === "Draft" ? "Черновик" : lot.status;
 

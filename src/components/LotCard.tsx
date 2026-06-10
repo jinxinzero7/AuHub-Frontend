@@ -27,6 +27,10 @@ const deliveryProviderLabels: Record<string, string> = {
   RussianPost: "Почта",
 };
 
+const statusLabels: Record<string, string> = {
+  CompletedNoWinner: "Без победителя",
+};
+
 const gradients = [
   "linear-gradient(135deg, #1C2535 0%, #2A3545 100%)",
   "linear-gradient(135deg, #251535 0%, #321A45 100%)",
@@ -79,6 +83,10 @@ export default function LotCard({ lot }: LotCardProps) {
             <span className="text-[10px] font-medium px-2 py-[3px] rounded bg-[rgba(184,136,46,0.2)] text-gold tracking-[0.2px]">
               На модерации
             </span>
+          ) : lot.status === "CompletedNoWinner" ? (
+            <span className="text-[10px] font-medium px-2 py-[3px] rounded bg-[rgba(107,114,128,0.2)] text-text2 tracking-[0.2px]">
+              Без победителя
+            </span>
           ) : (
             <span className="text-[10px] font-medium px-2 py-[3px] rounded bg-[rgba(184,136,46,0.2)] text-gold tracking-[0.2px]">
               Завершён
@@ -101,7 +109,7 @@ export default function LotCard({ lot }: LotCardProps) {
 
       <div className="p-[13px]">
         <div className="text-[10.5px] text-text3 mb-1 tracking-[0.1px]">
-          {lot.status}
+          {statusLabels[lot.status] ?? lot.status}
         </div>
         <h3 className="text-[13.5px] font-medium text-text mb-[11px] font-heading leading-[1.4] min-h-[38px] line-clamp-2">
           {lot.title}

@@ -10,6 +10,14 @@ import { formatDate } from "@/lib/utils";
 
 type Tab = "lots" | "bids" | "wins" | "balance";
 
+const lotStatusLabels: Record<string, string> = {
+  CompletedNoWinner: "Без победителя",
+};
+
+function lotStatusLabel(status: string) {
+  return lotStatusLabels[status] ?? status;
+}
+
 export default function ProfilePage() {
   const { user, isAuthenticated, logout } = useAuth();
   const [tab, setTab] = useState<Tab>("lots");
@@ -126,8 +134,9 @@ function MyLotsTab({ userId }: { userId: string }) {
               lot.status === "Draft" ? "bg-gray-100 text-gray-600" :
               lot.status === "PendingModeration" ? "bg-yellow-100 text-yellow-700" :
               lot.status === "Completed" ? "bg-blue-100 text-blue-700" :
+              lot.status === "CompletedNoWinner" ? "bg-gray-100 text-gray-600" :
               "bg-gray-100 text-gray-600"
-            }`}>{lot.status}</span>
+            }`}>{lotStatusLabel(lot.status)}</span>
             <span>{lot.currentPrice ?? lot.startingPrice} ₽</span>
             <span>{lot.bidsCount ?? 0} ставок</span>
           </div>
@@ -159,7 +168,7 @@ function MyBidsTab() {
           className="block bg-surface border border-border rounded-[10px] p-4 hover:border-gold/50 transition-colors">
           <div className="flex items-center justify-between mb-2">
             <div className="text-[14px] font-medium text-text">{g.lotTitle}</div>
-            <span className="text-[11px] px-2 py-0.5 rounded bg-gray-100 text-gray-600">{g.lotStatus}</span>
+            <span className="text-[11px] px-2 py-0.5 rounded bg-gray-100 text-gray-600">{lotStatusLabel(g.lotStatus)}</span>
           </div>
           {g.bids.map((b) => (
             <div key={b.id} className="flex items-center justify-between py-1 text-[13px]">
@@ -199,8 +208,9 @@ function MyWinsTab({ userId }: { userId: string }) {
               lot.status === "ShippingPending" ? "bg-yellow-100 text-yellow-700" :
               lot.status === "Shipped" ? "bg-blue-100 text-blue-700" :
               lot.status === "Delivered" ? "bg-green-100 text-green-700" :
+              lot.status === "CompletedNoWinner" ? "bg-gray-100 text-gray-600" :
               "bg-gray-100 text-gray-600"
-            }`}>{lot.status}</span>
+            }`}>{lotStatusLabel(lot.status)}</span>
             <span>{lot.currentPrice ?? lot.startingPrice} ₽</span>
           </div>
         </a>
