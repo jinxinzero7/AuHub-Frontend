@@ -113,9 +113,11 @@ export interface BalanceResponse {
 export interface TransactionItem {
   id: string;
   type: string;
+  effect: string;
   amount: number;
   createdAt: string;
   description: string;
+  referenceId?: string | null;
 }
 
 export interface TopUpRequest {
