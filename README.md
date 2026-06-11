@@ -117,6 +117,7 @@ Current verified state:
 - `npm run lint` passes with 0 errors and 0 warnings;
 - fonts are CSS system stacks defined in `src/app/globals.css`;
 - seller-facing lot creation/detail/profile screens show payout after the 1% service fee;
+- admin users page can ban by user ID, list banned users and unban users;
 - public registration no longer exposes Admin role selection.
 
 ---

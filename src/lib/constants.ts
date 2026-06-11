@@ -41,6 +41,7 @@ export const API_ENDPOINTS = {
     FROZEN_LOTS: '/api/admin/lots/frozen',
     DISPUTES: '/api/admin/disputes',
     BANNED_USERS: '/api/admin/users/banned',
+    BAN: (userId: string) => `/api/admin/users/${userId}/ban`,
     UNBAN: (userId: string) => `/api/admin/users/${userId}/unban`,
   },
   IMAGES: {
