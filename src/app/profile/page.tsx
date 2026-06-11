@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import api from "@/lib/api";
-import { User as UserIcon, LogOut, Plus } from "lucide-react";
-import type { Lot, MyBidsGroup, BalanceResponse, TransactionItem } from "@/types";
+import { User as UserIcon, LogOut, Plus, Star } from "lucide-react";
+import { API_ENDPOINTS } from "@/lib/constants";
+import type { Lot, MyBidsGroup, BalanceResponse, TransactionItem, SellerReviewsResponse } from "@/types";
 import { calculateSellerPayout, formatDate, formatPrice } from "@/lib/utils";
 
 type Tab = "lots" | "bids" | "wins" | "balance";
@@ -16,6 +17,40 @@ const lotStatusLabels: Record<string, string> = {
 
 function lotStatusLabel(status: string) {
   return lotStatusLabels[status] ?? status;
+}
+
+function SellerRatingBlock({ userId }: { userId: string }) {
+  const [reviews, setReviews] = useState<SellerReviewsResponse | null>(null);
+
+  useEffect(() => {
+    api.get<SellerReviewsResponse>(API_ENDPOINTS.SELLERS.REVIEWS(userId))
+      .then((response) => setReviews(response.data))
+      .catch((err) => {
+        console.error("Failed to fetch seller rating:", err);
+        setReviews(null);
+      });
+  }, [userId]);
+
+  return (
+    <div className="mb-6 rounded-[8px] border border-border bg-bg2 px-4 py-3">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="text-[12px] text-text2 font-light mb-1">Рейтинг продавца</div>
+          <div className="flex items-center gap-2 text-[14px] text-text">
+            <Star className={`w-4 h-4 ${reviews && reviews.reviewsCount > 0 ? "fill-gold text-gold" : "text-text3"}`} />
+            {reviews && reviews.reviewsCount > 0 ? (
+              <span>{reviews.averageRating.toFixed(1)} из 5</span>
+            ) : (
+              <span>Пока нет отзывов</span>
+            )}
+          </div>
+        </div>
+        <div className="text-[12px] text-text2">
+          {reviews?.reviewsCount ?? 0} отзывов
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function ProfilePage() {
@@ -71,6 +106,8 @@ export default function ProfilePage() {
                 <span className="text-[13px] text-text font-mono text-[11px]">{user.id}</span>
               </div>
             </div>
+
+            <SellerRatingBlock userId={user.id} />
 
             <button
               onClick={logout}

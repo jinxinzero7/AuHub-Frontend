@@ -45,6 +45,28 @@ export interface Lot {
   supportedDeliveryProviders: string[];
 }
 
+export interface Review {
+  id: string;
+  lotId: string;
+  sellerId: string;
+  buyerId: string;
+  rating: number;
+  comment?: string | null;
+  createdAt: string;
+}
+
+export interface SellerReviewsResponse {
+  sellerId: string;
+  reviewsCount: number;
+  averageRating: number;
+  reviews: Review[];
+}
+
+export interface CreateReviewRequest {
+  rating: number;
+  comment?: string;
+}
+
 export interface Bid {
   id: string;
   lotId: string;

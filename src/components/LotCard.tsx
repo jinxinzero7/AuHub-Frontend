@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Heart } from "lucide-react";
+import { Heart, Star } from "lucide-react";
 import { useState, useEffect } from "react";
 import { formatPrice, getTimeRemaining, formatTime } from "@/lib/utils";
+import api from "@/lib/api";
+import { API_ENDPOINTS } from "@/lib/constants";
+import type { SellerReviewsResponse } from "@/types";
 
 interface LotCardProps {
   lot: {
@@ -15,6 +18,7 @@ interface LotCardProps {
     startTime: string;
     endTime: string;
     status: string;
+    sellerId?: string;
     bidsCount: number;
     coverImageUrl?: string;
     supportedDeliveryProviders?: string[];
@@ -43,6 +47,7 @@ const gradients = [
 export default function LotCard({ lot }: LotCardProps) {
   const [time, setTime] = useState(() => getTimeRemaining(lot.endTime, lot.startTime));
   const [isFav, setIsFav] = useState(false);
+  const [sellerReviews, setSellerReviews] = useState<SellerReviewsResponse | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -50,6 +55,23 @@ export default function LotCard({ lot }: LotCardProps) {
     }, 1000);
     return () => clearInterval(interval);
   }, [lot.endTime, lot.startTime]);
+
+  useEffect(() => {
+    if (!lot.sellerId) return;
+
+    let isMounted = true;
+    api.get<SellerReviewsResponse>(API_ENDPOINTS.SELLERS.REVIEWS(lot.sellerId))
+      .then((response) => {
+        if (isMounted) setSellerReviews(response.data);
+      })
+      .catch(() => {
+        if (isMounted) setSellerReviews(null);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [lot.sellerId]);
 
   const gradient = gradients[parseInt(lot.id.replace(/-/g, ""), 36) % gradients.length];
   const isUrgent = time.seconds < 120 && time.isLive;
@@ -114,6 +136,14 @@ export default function LotCard({ lot }: LotCardProps) {
         <h3 className="text-[13.5px] font-medium text-text mb-[11px] font-heading leading-[1.4] min-h-[38px] line-clamp-2">
           {lot.title}
         </h3>
+        <div className="flex items-center gap-1.5 text-[11px] text-text2 mb-[10px]">
+          <Star className={`w-3 h-3 ${sellerReviews && sellerReviews.reviewsCount > 0 ? "fill-gold text-gold" : "text-text3"}`} />
+          {sellerReviews && sellerReviews.reviewsCount > 0 ? (
+            <span>{sellerReviews.averageRating.toFixed(1)} · {sellerReviews.reviewsCount} отзывов</span>
+          ) : (
+            <span>Новый продавец</span>
+          )}
+        </div>
         {lot.supportedDeliveryProviders && lot.supportedDeliveryProviders.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-[10px]">
             {lot.supportedDeliveryProviders.map((provider) => (

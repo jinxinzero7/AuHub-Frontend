@@ -22,6 +22,10 @@ export const API_ENDPOINTS = {
     REJECT: (id: string) => `/api/lots/${id}/reject`,
     UNFREEZE: (id: string) => `/api/lots/${id}/unfreeze`,
     RESOLVE_DISPUTE: (id: string) => `/api/lots/${id}/resolve-dispute`,
+    REVIEWS: (id: string) => `/api/lots/${id}/reviews`,
+  },
+  SELLERS: {
+    REVIEWS: (sellerId: string) => `/api/sellers/${sellerId}/reviews`,
   },
   BIDS: {
     MY: '/api/bids/my',
