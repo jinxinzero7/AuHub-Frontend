@@ -6,6 +6,7 @@ export const JWT_CLAIMS = {
   NICKNAME: 'nickname',
   EMAIL_VERIFIED: 'email_verified',
   PHONE_VERIFIED: 'phone_verified',
+  DOCUMENT_VERIFICATION_STATUS: 'document_verification_status',
   ROLE: 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
 } as const;
 
@@ -18,6 +19,8 @@ export const API_ENDPOINTS = {
     CONFIRM_EMAIL_VERIFICATION: '/api/auth/email-verification/confirm',
     REQUEST_PHONE_VERIFICATION: '/api/auth/phone-verification/request',
     CONFIRM_PHONE_VERIFICATION: '/api/auth/phone-verification/confirm',
+    CREATE_DOCUMENT_VERIFICATION: '/api/auth/document-verification/request',
+    MY_DOCUMENT_VERIFICATIONS: '/api/auth/document-verification/my',
   },
   LOTS: {
     LIST: '/api/lots',
@@ -57,6 +60,9 @@ export const API_ENDPOINTS = {
     BANNED_USERS: '/api/admin/users/banned',
     BAN: (userId: string) => `/api/admin/users/${userId}/ban`,
     UNBAN: (userId: string) => `/api/admin/users/${userId}/unban`,
+    DOCUMENT_VERIFICATION_PENDING: '/api/auth/document-verification/pending',
+    DOCUMENT_VERIFICATION_APPROVE: (id: string) => `/api/auth/document-verification/${id}/approve`,
+    DOCUMENT_VERIFICATION_REJECT: (id: string) => `/api/auth/document-verification/${id}/reject`,
   },
   IMAGES: {
     UPLOAD: (lotId: string) => `/api/lots/${lotId}/images`,

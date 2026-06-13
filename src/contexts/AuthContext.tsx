@@ -39,6 +39,7 @@ function decodeJwt(token: string): User | null {
       name: payload.name || payload[JWT_CLAIMS.NAME],
       isEmailVerified: (payload.email_verified || payload[JWT_CLAIMS.EMAIL_VERIFIED]) === "true",
       isPhoneVerified: (payload.phone_verified || payload[JWT_CLAIMS.PHONE_VERIFIED]) === "true",
+      documentVerificationStatus: payload.document_verification_status || payload[JWT_CLAIMS.DOCUMENT_VERIFICATION_STATUS] || "Unverified",
       role: (payload.role || payload[JWT_CLAIMS.ROLE]) === "Admin" ? 1 : 0,
     };
   } catch (err) {

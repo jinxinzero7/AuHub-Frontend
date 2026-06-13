@@ -7,6 +7,7 @@ export interface User {
   role: number;
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
+  documentVerificationStatus: string;
 }
 
 export interface AuthResponse {
@@ -30,6 +31,23 @@ export interface RegisterRequest {
   nickname: string;
   password: string;
   name: string;
+}
+
+export interface DocumentVerificationRequest {
+  id: string;
+  userId: string;
+  passportImagePath: string;
+  selfieImagePath: string;
+  status: string;
+  reviewedByAdminId?: string | null;
+  reviewedAt?: string | null;
+  rejectionReason?: string | null;
+  createdAt: string;
+}
+
+export interface CreateDocumentVerificationRequest {
+  passportImagePath: string;
+  selfieImagePath: string;
 }
 
 export interface Lot {

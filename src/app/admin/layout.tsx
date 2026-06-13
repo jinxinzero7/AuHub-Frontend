@@ -9,6 +9,7 @@ const SIDEBAR_LINKS = [
   { href: "/admin/moderation", label: "Модерация" },
   { href: "/admin/frozen", label: "Замороженные" },
   { href: "/admin/disputes", label: "Споры" },
+  { href: "/admin/documents", label: "Документы" },
   { href: "/admin/banned", label: "Пользователи" },
 ];
 
@@ -36,14 +37,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <>
       <Header />
       <main className="bg-bg min-h-screen">
-        <div className="max-w-[960px] mx-auto px-4 sm:px-8 py-10 flex gap-8">
-          <nav className="w-[180px] shrink-0">
-            <div className="space-y-1 sticky top-[74px]">
+        <div className="max-w-[960px] mx-auto px-4 sm:px-8 py-10 flex flex-col sm:flex-row gap-8">
+          <nav className="w-full sm:w-[180px] shrink-0">
+            <div className="flex sm:block gap-2 sm:space-y-1 sm:sticky sm:top-[74px] overflow-x-auto">
               {SIDEBAR_LINKS.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`block px-4 py-2 rounded-[7px] text-[13px] font-medium transition-colors font-ui ${
+                  className={`block whitespace-nowrap px-4 py-2 rounded-[7px] text-[13px] font-medium transition-colors font-ui ${
                     pathname === link.href
                       ? "bg-gold text-[#FFF8E8]"
                       : "text-text2 hover:bg-bg2 hover:text-text"

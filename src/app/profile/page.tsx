@@ -9,6 +9,8 @@ import { User as UserIcon, LogOut, Plus, Star } from "lucide-react";
 import { API_ENDPOINTS } from "@/lib/constants";
 import type {
   BasicSuccessResponse,
+  CreateDocumentVerificationRequest,
+  DocumentVerificationRequest,
   Lot,
   MyBidsGroup,
   BalanceResponse,
@@ -216,6 +218,115 @@ function VerificationControls({
   );
 }
 
+function DocumentVerificationControls({
+  user,
+  refreshSession,
+}: {
+  user: User;
+  refreshSession: () => Promise<void>;
+}) {
+  const [passportImagePath, setPassportImagePath] = useState("");
+  const [selfieImagePath, setSelfieImagePath] = useState("");
+  const [requests, setRequests] = useState<DocumentVerificationRequest[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    api.get<DocumentVerificationRequest[]>(API_ENDPOINTS.AUTH.MY_DOCUMENT_VERIFICATIONS)
+      .then((response) => setRequests(Array.isArray(response.data) ? response.data : []))
+      .catch((err) => console.error("Failed to fetch document verification requests:", err));
+  }, []);
+
+  const submitRequest = async () => {
+    setError("");
+    setMessage("");
+
+    const request: CreateDocumentVerificationRequest = {
+      passportImagePath: passportImagePath.trim(),
+      selfieImagePath: selfieImagePath.trim(),
+    };
+
+    if (!request.passportImagePath || !request.selfieImagePath) {
+      setError("Укажите оба пути к изображениям");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await api.post<DocumentVerificationRequest>(
+        API_ENDPOINTS.AUTH.CREATE_DOCUMENT_VERIFICATION,
+        request,
+      );
+      setRequests((prev) => [response.data, ...prev]);
+      setPassportImagePath("");
+      setSelfieImagePath("");
+      await refreshSession();
+      setMessage("Заявка отправлена на проверку");
+    } catch (err) {
+      setError(getApiErrorMessage(err, "Не удалось отправить заявку"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const hasPendingRequest = requests.some((request) => request.status === "PendingReview") ||
+    user.documentVerificationStatus === "PendingReview";
+  const isVerified = user.documentVerificationStatus === "Verified";
+
+  return (
+    <div className="border-t border-border pt-4 mb-6 space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-[13px] font-medium text-text">Проверка документов</div>
+        <span className={`text-[12px] font-medium ${
+          isVerified ? "text-green-600" : hasPendingRequest ? "text-yellow-700" : "text-text3"
+        }`}>
+          {isVerified ? "Verified" : hasPendingRequest ? "PendingReview" : "Unverified"}
+        </span>
+      </div>
+
+      {!isVerified && !hasPendingRequest && (
+        <div className="space-y-2">
+          <input
+            value={passportImagePath}
+            onChange={(e) => setPassportImagePath(e.target.value)}
+            placeholder="private/passport-spread.jpg"
+            className="w-full px-3 py-2 text-[13px] bg-bg2 border border-border rounded-[7px] text-text placeholder:text-text3 outline-none font-ui focus:border-gold"
+          />
+          <input
+            value={selfieImagePath}
+            onChange={(e) => setSelfieImagePath(e.target.value)}
+            placeholder="private/selfie-with-passport.jpg"
+            className="w-full px-3 py-2 text-[13px] bg-bg2 border border-border rounded-[7px] text-text placeholder:text-text3 outline-none font-ui focus:border-gold"
+          />
+          <button
+            type="button"
+            onClick={submitRequest}
+            disabled={loading}
+            className="w-full py-2 rounded-[7px] border-none bg-gold text-[#FFF8E8] text-[13px] font-medium hover:bg-gold-hover transition-colors disabled:opacity-50"
+          >
+            {loading ? "Отправка..." : "Отправить заявку"}
+          </button>
+        </div>
+      )}
+
+      {requests.length > 0 && (
+        <div className="space-y-1">
+          {requests.slice(0, 3).map((request) => (
+            <div key={request.id} className="flex items-center justify-between gap-3 text-[12px]">
+              <span className="text-text2">{new Date(request.createdAt).toLocaleDateString("ru-RU")}</span>
+              <span className="font-medium text-text">{request.status}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {message && <div className="text-[12px] text-green-600">{message}</div>}
+      {error && <div className="text-[12px] text-danger">{error}</div>}
+    </div>
+  );
+}
+
 export default function ProfilePage() {
   const { user, isAuthenticated, logout, refreshSession } = useAuth();
   const [tab, setTab] = useState<Tab>("lots");
@@ -291,6 +402,7 @@ export default function ProfilePage() {
             </div>
 
             <VerificationControls user={user} refreshSession={refreshSession} />
+            <DocumentVerificationControls user={user} refreshSession={refreshSession} />
 
             <SellerRatingBlock userId={user.id} />
 
