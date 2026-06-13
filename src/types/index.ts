@@ -29,6 +29,7 @@ export interface Lot {
   description: string;
   startingPrice: number;
   currentPrice: number;
+  durationHours: number;
   startTime: string;
   endTime: string;
   sellerId: string;
@@ -43,6 +44,7 @@ export interface Lot {
   deliveryRequestedAt?: string;
   deliveryRequestDeadlineAt?: string;
   supportedDeliveryProviders: string[];
+  adminComment?: string;
 }
 
 export interface Review {
@@ -91,6 +93,10 @@ export interface CreateLotRequest {
   startingPrice: number;
   durationHours: number;
   supportedDeliveryProviders: string[];
+}
+
+export interface UpdateLotRequest extends CreateLotRequest {
+  submitForModeration: boolean;
 }
 
 export interface PlaceBidRequest {

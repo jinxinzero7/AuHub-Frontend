@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import api from "@/lib/api";
@@ -162,9 +163,11 @@ function MyLotsTab({ userId }: { userId: string }) {
   return (
     <div className="space-y-2">
       {lots.map((lot) => (
-        <a key={lot.id} href={`/lots/${lot.id}`}
-          className="block bg-surface border border-border rounded-[10px] p-4 hover:border-gold/50 transition-colors">
-          <div className="text-[14px] font-medium text-text mb-1">{lot.title}</div>
+        <div key={lot.id}
+          className="bg-surface border border-border rounded-[10px] p-4 hover:border-gold/50 transition-colors">
+          <Link href={`/lots/${lot.id}`} className="block text-[14px] font-medium text-text mb-1 hover:text-gold transition-colors">
+            {lot.title}
+          </Link>
           <div className="flex items-center gap-3 text-[12px] text-text2">
             <span className={`px-2 py-0.5 rounded text-[11px] font-medium ${
               lot.status === "Active" ? "bg-green-100 text-green-700" :
@@ -180,7 +183,15 @@ function MyLotsTab({ userId }: { userId: string }) {
           <div className="mt-2 text-[12px] text-text3">
             С учетом комиссии вы получите {formatPrice(calculateSellerPayout(lot.currentPrice ?? lot.startingPrice))} ₽
           </div>
-        </a>
+          {(lot.status === "Draft" || lot.status === "Rejected") && (
+            <Link
+              href={`/lots/${lot.id}/edit`}
+              className="mt-3 inline-flex rounded-[7px] border border-border bg-bg2 px-3 py-1.5 text-[12px] font-medium text-text hover:border-gold transition-colors"
+            >
+              Редактировать
+            </Link>
+          )}
+        </div>
       ))}
     </div>
   );

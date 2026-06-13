@@ -117,6 +117,7 @@ Current verified state:
 - `npm run lint` passes with 0 errors and 0 warnings;
 - fonts are CSS system stacks defined in `src/app/globals.css`;
 - seller-facing lot creation/detail/profile screens show payout after the 1% service fee;
+- sellers can edit own `Draft`/`Rejected` lots from lot detail/profile and either save as draft or submit for moderation;
 - lot cards and lot detail show seller rating/review count from Auctions reviews API;
 - winning buyer can leave one seller review after `TransactionComplete`;
 - profile shows current user's public seller rating summary;

@@ -17,6 +17,7 @@ export const API_ENDPOINTS = {
     BIDS: (id: string) => `/api/lots/${id}/bids`,
     IMAGES: (id: string) => `/api/lots/${id}/images`,
     CREATE: '/api/lots',
+    UPDATE: (id: string) => `/api/lots/${id}`,
     SUBMIT_FOR_MODERATION: (id: string) => `/api/lots/${id}/submit-for-moderation`,
     APPROVE: (id: string) => `/api/lots/${id}/approve`,
     REJECT: (id: string) => `/api/lots/${id}/reject`,

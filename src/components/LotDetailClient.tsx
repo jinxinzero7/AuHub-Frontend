@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, type FormEvent } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Star } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSignalR } from "@/hooks/useSignalR";
@@ -239,6 +240,7 @@ export default function LotDetailClient({
     : false;
   const canRequestDelivery = user?.id === winnerId && status === "DeliveryRequestPending" && !isDeliveryDeadlineExpired;
   const canShipLot = isSeller && status === "ShippingPending";
+  const canEditLot = isSeller && (status === "Draft" || status === "Rejected");
   const serviceFee = calculateServiceFee(currentPrice);
   const sellerPayout = calculateSellerPayout(currentPrice);
   const existingReview = sellerReviews?.reviews.find((review) => review.lotId === lotId);
@@ -526,6 +528,15 @@ export default function LotDetailClient({
             >
               Отправить на модерацию
             </button>
+          )}
+
+          {canEditLot && (
+            <Link
+              href={`/lots/${lotId}/edit`}
+              className="mt-3 block w-full text-center bg-bg2 hover:border-gold border border-border text-text font-medium py-3 rounded-[8px] transition-colors"
+            >
+              Редактировать лот
+            </Link>
           )}
         </div>
 
