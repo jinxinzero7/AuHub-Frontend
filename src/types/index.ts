@@ -15,6 +15,10 @@ export interface AuthResponse {
   refreshToken: string;
 }
 
+export interface BasicSuccessResponse {
+  success: boolean;
+}
+
 export interface LoginRequest {
   identifier: string;
   password: string;

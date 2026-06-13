@@ -13,6 +13,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (data: LoginRequest) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
+  refreshSession: () => Promise<void>;
   logout: () => void;
 }
 
@@ -23,6 +24,7 @@ const AuthContext = createContext<AuthContextType>({
   isLoading: true,
   login: async () => {},
   register: async () => {},
+  refreshSession: async () => {},
   logout: () => {},
 });
 
@@ -92,6 +94,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [router]);
 
+  const refreshSession = useCallback(async () => {
+    const refreshToken = localStorage.getItem("refreshToken");
+    if (!refreshToken) {
+      return;
+    }
+
+    const response = await api.post<AuthResponse>(API_ENDPOINTS.AUTH.REFRESH, { refreshToken });
+    if (response.data.success && response.data.accessToken) {
+      localStorage.setItem("accessToken", response.data.accessToken);
+      localStorage.setItem("refreshToken", response.data.refreshToken);
+      const decoded = decodeJwt(response.data.accessToken);
+      setUser(decoded);
+      setAccessToken(response.data.accessToken);
+    }
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
@@ -109,6 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         login,
         register,
+        refreshSession,
         logout,
       }}
     >

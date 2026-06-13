@@ -7,7 +7,16 @@ import Header from "@/components/Header";
 import api from "@/lib/api";
 import { User as UserIcon, LogOut, Plus, Star } from "lucide-react";
 import { API_ENDPOINTS } from "@/lib/constants";
-import type { Lot, MyBidsGroup, BalanceResponse, TransactionItem, SellerReviewsResponse, SellerTrustScoreResponse } from "@/types";
+import type {
+  BasicSuccessResponse,
+  Lot,
+  MyBidsGroup,
+  BalanceResponse,
+  TransactionItem,
+  SellerReviewsResponse,
+  SellerTrustScoreResponse,
+  User,
+} from "@/types";
 import { calculateSellerPayout, formatDate, formatPrice } from "@/lib/utils";
 
 type Tab = "lots" | "bids" | "wins" | "balance";
@@ -68,8 +77,147 @@ function SellerRatingBlock({ userId }: { userId: string }) {
   );
 }
 
+function getApiErrorMessage(err: unknown, fallback: string) {
+  if (err instanceof Error && "response" in err) {
+    const axiosErr = err as { response?: { data?: { errors?: { generalErrors?: string[] } } } };
+    return axiosErr.response?.data?.errors?.generalErrors?.[0] || fallback;
+  }
+
+  return fallback;
+}
+
+function VerificationControls({
+  user,
+  refreshSession,
+}: {
+  user: User;
+  refreshSession: () => Promise<void>;
+}) {
+  const [emailToken, setEmailToken] = useState("");
+  const [phoneCode, setPhoneCode] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [loadingAction, setLoadingAction] = useState<string | null>(null);
+
+  const runAction = async (action: string, handler: () => Promise<void>) => {
+    setError("");
+    setMessage("");
+    setLoadingAction(action);
+
+    try {
+      await handler();
+    } catch (err) {
+      setError(getApiErrorMessage(err, "Не удалось выполнить действие"));
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const requestEmailVerification = () => runAction("request-email", async () => {
+    await api.post<BasicSuccessResponse>(API_ENDPOINTS.AUTH.REQUEST_EMAIL_VERIFICATION);
+    setMessage("Письмо подтверждения отправлено");
+  });
+
+  const confirmEmailVerification = () => runAction("confirm-email", async () => {
+    await api.post<BasicSuccessResponse>(API_ENDPOINTS.AUTH.CONFIRM_EMAIL_VERIFICATION, { token: emailToken.trim() });
+    setEmailToken("");
+    await refreshSession();
+    setMessage("Email подтверждён");
+  });
+
+  const requestPhoneVerification = () => runAction("request-phone", async () => {
+    await api.post<BasicSuccessResponse>(API_ENDPOINTS.AUTH.REQUEST_PHONE_VERIFICATION);
+    setMessage("SMS-код отправлен");
+  });
+
+  const confirmPhoneVerification = () => runAction("confirm-phone", async () => {
+    await api.post<BasicSuccessResponse>(API_ENDPOINTS.AUTH.CONFIRM_PHONE_VERIFICATION, { code: phoneCode.trim() });
+    setPhoneCode("");
+    await refreshSession();
+    setMessage("Телефон подтверждён");
+  });
+
+  if (user.isEmailVerified && user.isPhoneVerified) {
+    return (
+      <div className="border-t border-border pt-4 mb-6">
+        <div className="text-[13px] font-medium text-green-600">Контакты подтверждены</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="border-t border-border pt-4 mb-6 space-y-4">
+      <div className="text-[13px] font-medium text-text">Подтверждение контактов</div>
+
+      {!user.isEmailVerified && (
+        <div className="space-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <button
+              type="button"
+              onClick={requestEmailVerification}
+              disabled={loadingAction !== null}
+              className="w-full sm:w-auto px-3 py-2 rounded-[7px] border border-border bg-bg2 text-[13px] font-medium text-text hover:border-gold transition-colors disabled:opacity-50"
+            >
+              {loadingAction === "request-email" ? "Отправка..." : "Отправить email"}
+            </button>
+            <input
+              value={emailToken}
+              onChange={(e) => setEmailToken(e.target.value)}
+              placeholder="Токен"
+              className="w-full min-w-0 flex-1 px-3 py-2 text-[13px] bg-bg2 border border-border rounded-[7px] text-text placeholder:text-text3 outline-none font-ui focus:border-gold"
+              autoComplete="one-time-code"
+            />
+            <button
+              type="button"
+              onClick={confirmEmailVerification}
+              disabled={loadingAction !== null || !emailToken.trim()}
+              className="w-full sm:w-auto px-3 py-2 rounded-[7px] border-none bg-gold text-[#FFF8E8] text-[13px] font-medium hover:bg-gold-hover transition-colors disabled:opacity-50"
+            >
+              {loadingAction === "confirm-email" ? "Проверка..." : "OK"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!user.isPhoneVerified && (
+        <div className="space-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <button
+              type="button"
+              onClick={requestPhoneVerification}
+              disabled={loadingAction !== null}
+              className="w-full sm:w-auto px-3 py-2 rounded-[7px] border border-border bg-bg2 text-[13px] font-medium text-text hover:border-gold transition-colors disabled:opacity-50"
+            >
+              {loadingAction === "request-phone" ? "Отправка..." : "Отправить SMS"}
+            </button>
+            <input
+              value={phoneCode}
+              onChange={(e) => setPhoneCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="000000"
+              className="w-full min-w-0 flex-1 px-3 py-2 text-[13px] bg-bg2 border border-border rounded-[7px] text-text placeholder:text-text3 outline-none font-ui focus:border-gold"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+            />
+            <button
+              type="button"
+              onClick={confirmPhoneVerification}
+              disabled={loadingAction !== null || phoneCode.length !== 6}
+              className="w-full sm:w-auto px-3 py-2 rounded-[7px] border-none bg-gold text-[#FFF8E8] text-[13px] font-medium hover:bg-gold-hover transition-colors disabled:opacity-50"
+            >
+              {loadingAction === "confirm-phone" ? "Проверка..." : "OK"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {message && <div className="text-[12px] text-green-600">{message}</div>}
+      {error && <div className="text-[12px] text-danger">{error}</div>}
+    </div>
+  );
+}
+
 export default function ProfilePage() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, refreshSession } = useAuth();
   const [tab, setTab] = useState<Tab>("lots");
 
   if (!isAuthenticated || !user) {
@@ -141,6 +289,8 @@ export default function ProfilePage() {
                 <span className="text-[13px] text-text font-mono text-[11px]">{user.id}</span>
               </div>
             </div>
+
+            <VerificationControls user={user} refreshSession={refreshSession} />
 
             <SellerRatingBlock userId={user.id} />
 

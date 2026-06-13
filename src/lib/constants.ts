@@ -14,6 +14,10 @@ export const API_ENDPOINTS = {
     LOGIN: '/api/auth/login',
     REGISTER: '/api/auth/register',
     REFRESH: '/api/auth/refresh',
+    REQUEST_EMAIL_VERIFICATION: '/api/auth/email-verification/request',
+    CONFIRM_EMAIL_VERIFICATION: '/api/auth/email-verification/confirm',
+    REQUEST_PHONE_VERIFICATION: '/api/auth/phone-verification/request',
+    CONFIRM_PHONE_VERIFICATION: '/api/auth/phone-verification/confirm',
   },
   LOTS: {
     LIST: '/api/lots',

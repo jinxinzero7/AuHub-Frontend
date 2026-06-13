@@ -126,6 +126,7 @@ Current verified state:
 - public registration collects full name, nickname, phone, email and password;
 - login accepts email or phone;
 - profile shows email/phone verification states;
+- profile can request email/phone verification and submit email token / SMS code;
 - public registration no longer exposes Admin role selection.
 
 ---
