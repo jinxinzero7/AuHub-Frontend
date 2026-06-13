@@ -2,6 +2,10 @@ export const JWT_CLAIMS = {
   ID: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier',
   EMAIL: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
   NAME: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name',
+  PHONE_NUMBER: 'phone_number',
+  NICKNAME: 'nickname',
+  EMAIL_VERIFIED: 'email_verified',
+  PHONE_VERIFIED: 'phone_verified',
   ROLE: 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
 } as const;
 

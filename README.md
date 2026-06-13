@@ -123,6 +123,9 @@ Current verified state:
 - winning buyer can leave one seller review after `TransactionComplete`;
 - profile shows current user's public seller rating summary;
 - admin users page can ban by user ID, list banned users and unban users;
+- public registration collects full name, nickname, phone, email and password;
+- login accepts email or phone;
+- profile shows email/phone verification states;
 - public registration no longer exposes Admin role selection.
 
 ---

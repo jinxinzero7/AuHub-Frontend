@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
-import { validateEmail } from "@/lib/validation";
+import { validateEmailOrPhone } from "@/lib/validation";
 
 export default function LoginPage() {
   const { login } = useAuth();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState("");
@@ -18,8 +18,8 @@ export default function LoginPage() {
     setServerError("");
 
     const newErrors: Record<string, string> = {};
-    const emailErr = validateEmail(email);
-    if (emailErr) newErrors.email = emailErr;
+    const identifierErr = validateEmailOrPhone(identifier);
+    if (identifierErr) newErrors.identifier = identifierErr;
     if (!password) newErrors.password = "Пароль обязателен";
 
     if (Object.keys(newErrors).length > 0) {
@@ -31,13 +31,13 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await login({ email, password });
+      await login({ identifier, password });
     } catch (err: unknown) {
       if (err instanceof Error && "response" in err) {
         const axiosErr = err as { response?: { data?: { errors?: { generalErrors?: string[] } } } };
-        setServerError(axiosErr.response?.data?.errors?.generalErrors?.[0] || "Неверный email или пароль");
+        setServerError(axiosErr.response?.data?.errors?.generalErrors?.[0] || "Неверный email/телефон или пароль");
       } else {
-        setServerError("Неверный email или пароль");
+        setServerError("Неверный email/телефон или пароль");
       }
     } finally {
       setIsLoading(false);
@@ -64,18 +64,19 @@ export default function LoginPage() {
             )}
 
             <div>
-              <label htmlFor="email" className="block text-[13px] font-medium text-text2 mb-1.5">
-                Email
+              <label htmlFor="identifier" className="block text-[13px] font-medium text-text2 mb-1.5">
+                Email или телефон
               </label>
               <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => { setEmail(e.target.value); setErrors(prev => ({ ...prev, email: "" })); }}
-                className={`w-full px-3 py-2.5 text-[14px] bg-bg2 border rounded-[7px] text-text placeholder:text-text3 outline-none transition-colors font-ui ${errors.email ? "border-danger" : "border-border focus:border-gold"}`}
-                placeholder="your@email.com"
+                id="identifier"
+                type="text"
+                value={identifier}
+                onChange={(e) => { setIdentifier(e.target.value); setErrors((prev) => ({ ...prev, identifier: "" })); }}
+                className={`w-full px-3 py-2.5 text-[14px] bg-bg2 border rounded-[7px] text-text placeholder:text-text3 outline-none transition-colors font-ui ${errors.identifier ? "border-danger" : "border-border focus:border-gold"}`}
+                placeholder="your@email.com или +79990000000"
+                autoComplete="username"
               />
-              {errors.email && <p className="text-[12px] text-danger mt-1">{errors.email}</p>}
+              {errors.identifier && <p className="text-[12px] text-danger mt-1">{errors.identifier}</p>}
             </div>
 
             <div>
@@ -86,9 +87,10 @@ export default function LoginPage() {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => { setPassword(e.target.value); setErrors(prev => ({ ...prev, password: "" })); }}
+                onChange={(e) => { setPassword(e.target.value); setErrors((prev) => ({ ...prev, password: "" })); }}
                 className={`w-full px-3 py-2.5 text-[14px] bg-bg2 border rounded-[7px] text-text placeholder:text-text3 outline-none transition-colors font-ui ${errors.password ? "border-danger" : "border-border focus:border-gold"}`}
                 placeholder="Введите пароль"
+                autoComplete="current-password"
               />
               {errors.password && <p className="text-[12px] text-danger mt-1">{errors.password}</p>}
             </div>

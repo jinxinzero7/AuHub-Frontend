@@ -32,7 +32,11 @@ function decodeJwt(token: string): User | null {
     return {
       id: payload.sub || payload[JWT_CLAIMS.ID],
       email: payload.email || payload[JWT_CLAIMS.EMAIL],
+      phoneNumber: payload.phone_number || payload[JWT_CLAIMS.PHONE_NUMBER] || "",
+      nickname: payload.nickname || payload[JWT_CLAIMS.NICKNAME] || "",
       name: payload.name || payload[JWT_CLAIMS.NAME],
+      isEmailVerified: (payload.email_verified || payload[JWT_CLAIMS.EMAIL_VERIFIED]) === "true",
+      isPhoneVerified: (payload.phone_verified || payload[JWT_CLAIMS.PHONE_VERIFIED]) === "true",
       role: (payload.role || payload[JWT_CLAIMS.ROLE]) === "Admin" ? 1 : 0,
     };
   } catch (err) {

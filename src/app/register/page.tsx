@@ -3,16 +3,28 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
-import { validateEmail, validatePassword, validateName } from "@/lib/validation";
+import {
+  validateEmail,
+  validateName,
+  validateNickname,
+  validatePassword,
+  validatePhoneNumber,
+} from "@/lib/validation";
 
 export default function RegisterPage() {
   const { register } = useAuth();
+  const [name, setName] = useState("");
+  const [nickname, setNickname] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const clearFieldError = (field: string) => {
+    setErrors((prev) => ({ ...prev, [field]: "" }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,9 +32,14 @@ export default function RegisterPage() {
 
     const newErrors: Record<string, string> = {};
     const nameErr = validateName(name);
+    const nicknameErr = validateNickname(nickname);
+    const phoneErr = validatePhoneNumber(phoneNumber);
     const emailErr = validateEmail(email);
     const passErr = validatePassword(password);
+
     if (nameErr) newErrors.name = nameErr;
+    if (nicknameErr) newErrors.nickname = nicknameErr;
+    if (phoneErr) newErrors.phoneNumber = phoneErr;
     if (emailErr) newErrors.email = emailErr;
     if (passErr) newErrors.password = passErr;
 
@@ -35,7 +52,7 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      await register({ email, password, name, role: 0 });
+      await register({ email, phoneNumber, nickname, password, name });
     } catch (err: unknown) {
       if (err instanceof Error && "response" in err) {
         const axiosErr = err as { response?: { data?: { errors?: { generalErrors?: string[] } } } };
@@ -75,11 +92,44 @@ export default function RegisterPage() {
                 id="name"
                 type="text"
                 value={name}
-                onChange={(e) => { setName(e.target.value); setErrors(prev => ({ ...prev, name: "" })); }}
+                onChange={(e) => { setName(e.target.value); clearFieldError("name"); }}
                 className={`w-full px-3 py-2.5 text-[14px] bg-bg2 border rounded-[7px] text-text placeholder:text-text3 outline-none transition-colors font-ui ${errors.name ? "border-danger" : "border-border focus:border-gold"}`}
                 placeholder="Ваше имя"
+                autoComplete="name"
               />
               {errors.name && <p className="text-[12px] text-danger mt-1">{errors.name}</p>}
+            </div>
+
+            <div>
+              <label htmlFor="nickname" className="block text-[13px] font-medium text-text2 mb-1.5">
+                Никнейм
+              </label>
+              <input
+                id="nickname"
+                type="text"
+                value={nickname}
+                onChange={(e) => { setNickname(e.target.value); clearFieldError("nickname"); }}
+                className={`w-full px-3 py-2.5 text-[14px] bg-bg2 border rounded-[7px] text-text placeholder:text-text3 outline-none transition-colors font-ui ${errors.nickname ? "border-danger" : "border-border focus:border-gold"}`}
+                placeholder="nickname_123"
+                autoComplete="username"
+              />
+              {errors.nickname && <p className="text-[12px] text-danger mt-1">{errors.nickname}</p>}
+            </div>
+
+            <div>
+              <label htmlFor="phoneNumber" className="block text-[13px] font-medium text-text2 mb-1.5">
+                Телефон
+              </label>
+              <input
+                id="phoneNumber"
+                type="tel"
+                value={phoneNumber}
+                onChange={(e) => { setPhoneNumber(e.target.value); clearFieldError("phoneNumber"); }}
+                className={`w-full px-3 py-2.5 text-[14px] bg-bg2 border rounded-[7px] text-text placeholder:text-text3 outline-none transition-colors font-ui ${errors.phoneNumber ? "border-danger" : "border-border focus:border-gold"}`}
+                placeholder="+79990000000"
+                autoComplete="tel"
+              />
+              {errors.phoneNumber && <p className="text-[12px] text-danger mt-1">{errors.phoneNumber}</p>}
             </div>
 
             <div>
@@ -90,9 +140,10 @@ export default function RegisterPage() {
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => { setEmail(e.target.value); setErrors(prev => ({ ...prev, email: "" })); }}
+                onChange={(e) => { setEmail(e.target.value); clearFieldError("email"); }}
                 className={`w-full px-3 py-2.5 text-[14px] bg-bg2 border rounded-[7px] text-text placeholder:text-text3 outline-none transition-colors font-ui ${errors.email ? "border-danger" : "border-border focus:border-gold"}`}
                 placeholder="your@email.com"
+                autoComplete="email"
               />
               {errors.email && <p className="text-[12px] text-danger mt-1">{errors.email}</p>}
             </div>
@@ -105,9 +156,10 @@ export default function RegisterPage() {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => { setPassword(e.target.value); setErrors(prev => ({ ...prev, password: "" })); }}
+                onChange={(e) => { setPassword(e.target.value); clearFieldError("password"); }}
                 className={`w-full px-3 py-2.5 text-[14px] bg-bg2 border rounded-[7px] text-text placeholder:text-text3 outline-none transition-colors font-ui ${errors.password ? "border-danger" : "border-border focus:border-gold"}`}
                 placeholder="Минимум 8 символов"
+                autoComplete="new-password"
               />
               {errors.password && <p className="text-[12px] text-danger mt-1">{errors.password}</p>}
             </div>

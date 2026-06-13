@@ -1,8 +1,12 @@
 export interface User {
   id: string;
   email: string;
+  phoneNumber: string;
+  nickname: string;
   name: string;
   role: number;
+  isEmailVerified: boolean;
+  isPhoneVerified: boolean;
 }
 
 export interface AuthResponse {
@@ -12,15 +16,16 @@ export interface AuthResponse {
 }
 
 export interface LoginRequest {
-  email: string;
+  identifier: string;
   password: string;
 }
 
 export interface RegisterRequest {
   email: string;
+  phoneNumber: string;
+  nickname: string;
   password: string;
   name: string;
-  role: number;
 }
 
 export interface Lot {

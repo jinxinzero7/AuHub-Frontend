@@ -105,11 +105,31 @@ export default function ProfilePage() {
               </div>
               <div>
                 <h1 className="font-heading text-[22px] font-semibold text-text">{user.name}</h1>
-                <p className="text-[13px] text-text2 font-light">{user.email}</p>
+                <p className="text-[13px] text-text2 font-light">@{user.nickname || user.id.slice(0, 8)}</p>
               </div>
             </div>
 
             <div className="space-y-3 mb-6">
+              <div className="flex items-center justify-between py-2 border-b border-border">
+                <span className="text-[13px] text-text2 font-light">Email</span>
+                <span className="text-[13px] text-text font-medium">{user.email}</span>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-border">
+                <span className="text-[13px] text-text2 font-light">Телефон</span>
+                <span className="text-[13px] text-text font-medium">{user.phoneNumber || "Не указан"}</span>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-border">
+                <span className="text-[13px] text-text2 font-light">Email подтверждён</span>
+                <span className={`text-[13px] font-medium ${user.isEmailVerified ? "text-green-600" : "text-yellow-700"}`}>
+                  {user.isEmailVerified ? "Да" : "Нет"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-border">
+                <span className="text-[13px] text-text2 font-light">Телефон подтверждён</span>
+                <span className={`text-[13px] font-medium ${user.isPhoneVerified ? "text-green-600" : "text-yellow-700"}`}>
+                  {user.isPhoneVerified ? "Да" : "Нет"}
+                </span>
+              </div>
               <div className="flex items-center justify-between py-2 border-b border-border">
                 <span className="text-[13px] text-text2 font-light">Роль</span>
                 <span className="text-[13px] text-text font-medium">

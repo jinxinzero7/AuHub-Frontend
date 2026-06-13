@@ -4,6 +4,27 @@ export function validateEmail(email: string): string | null {
   return null;
 }
 
+export function validatePhoneNumber(phoneNumber: string): string | null {
+  if (!phoneNumber) return "Телефон обязателен";
+  const normalizedPhone = phoneNumber.replace(/[\s\-()]/g, "");
+  if (!/^\+?[1-9]\d{9,14}$/.test(normalizedPhone)) return "Неверный формат телефона";
+  return null;
+}
+
+export function validateEmailOrPhone(identifier: string): string | null {
+  if (!identifier) return "Email или телефон обязателен";
+  if (identifier.includes("@")) return validateEmail(identifier);
+  return validatePhoneNumber(identifier);
+}
+
+export function validateNickname(nickname: string): string | null {
+  if (!nickname) return "Никнейм обязателен";
+  if (nickname.length < 3) return "Минимум 3 символа";
+  if (nickname.length > 32) return "Максимум 32 символа";
+  if (!/^[a-zA-Z0-9_]+$/.test(nickname)) return "Только латиница, цифры и _";
+  return null;
+}
+
 export function validatePassword(password: string): string | null {
   if (!password) return "Пароль обязателен";
   if (password.length < 8) return "Минимум 8 символов";
