@@ -27,6 +27,7 @@ export const API_ENDPOINTS = {
   },
   SELLERS: {
     REVIEWS: (sellerId: string) => `/api/sellers/${sellerId}/reviews`,
+    TRUST: (sellerId: string) => `/api/sellers/${sellerId}/trust`,
   },
   BIDS: {
     MY: '/api/bids/my',

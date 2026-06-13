@@ -119,6 +119,7 @@ Current verified state:
 - seller-facing lot creation/detail/profile screens show payout after the 1% service fee;
 - sellers can edit own `Draft`/`Rejected` lots from lot detail/profile and either save as draft or submit for moderation;
 - lot cards and lot detail show seller rating/review count from Auctions reviews API;
+- lot cards, lot detail and profile show public seller reliability score from Auctions trust API;
 - winning buyer can leave one seller review after `TransactionComplete`;
 - profile shows current user's public seller rating summary;
 - admin users page can ban by user ID, list banned users and unban users;

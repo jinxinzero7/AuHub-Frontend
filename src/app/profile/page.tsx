@@ -7,7 +7,7 @@ import Header from "@/components/Header";
 import api from "@/lib/api";
 import { User as UserIcon, LogOut, Plus, Star } from "lucide-react";
 import { API_ENDPOINTS } from "@/lib/constants";
-import type { Lot, MyBidsGroup, BalanceResponse, TransactionItem, SellerReviewsResponse } from "@/types";
+import type { Lot, MyBidsGroup, BalanceResponse, TransactionItem, SellerReviewsResponse, SellerTrustScoreResponse } from "@/types";
 import { calculateSellerPayout, formatDate, formatPrice } from "@/lib/utils";
 
 type Tab = "lots" | "bids" | "wins" | "balance";
@@ -22,13 +22,21 @@ function lotStatusLabel(status: string) {
 
 function SellerRatingBlock({ userId }: { userId: string }) {
   const [reviews, setReviews] = useState<SellerReviewsResponse | null>(null);
+  const [trust, setTrust] = useState<SellerTrustScoreResponse | null>(null);
 
   useEffect(() => {
-    api.get<SellerReviewsResponse>(API_ENDPOINTS.SELLERS.REVIEWS(userId))
-      .then((response) => setReviews(response.data))
+    Promise.all([
+      api.get<SellerReviewsResponse>(API_ENDPOINTS.SELLERS.REVIEWS(userId)),
+      api.get<SellerTrustScoreResponse>(API_ENDPOINTS.SELLERS.TRUST(userId)),
+    ])
+      .then(([reviewsResponse, trustResponse]) => {
+        setReviews(reviewsResponse.data);
+        setTrust(trustResponse.data);
+      })
       .catch((err) => {
         console.error("Failed to fetch seller rating:", err);
         setReviews(null);
+        setTrust(null);
       });
   }, [userId]);
 
@@ -50,6 +58,12 @@ function SellerRatingBlock({ userId }: { userId: string }) {
           {reviews?.reviewsCount ?? 0} отзывов
         </div>
       </div>
+      {trust && (
+        <div className="mt-3 flex items-center justify-between border-t border-border pt-3 text-[13px]">
+          <span className="text-text2">Надёжность</span>
+          <span className="font-medium text-text">{trust.score}/100 · {trust.badge}</span>
+        </div>
+      )}
     </div>
   );
 }

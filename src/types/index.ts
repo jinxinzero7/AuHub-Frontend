@@ -64,6 +64,15 @@ export interface SellerReviewsResponse {
   reviews: Review[];
 }
 
+export interface SellerTrustScoreResponse {
+  sellerId: string;
+  score: number;
+  badge: string;
+  eventsCount: number;
+  successfulSales: number;
+  sellerLostDisputes: number;
+}
+
 export interface CreateReviewRequest {
   rating: number;
   comment?: string;

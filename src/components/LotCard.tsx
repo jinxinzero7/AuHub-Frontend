@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 import { formatPrice, getTimeRemaining, formatTime } from "@/lib/utils";
 import api from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/constants";
-import type { SellerReviewsResponse } from "@/types";
+import type { SellerReviewsResponse, SellerTrustScoreResponse } from "@/types";
 
 interface LotCardProps {
   lot: {
@@ -48,6 +48,7 @@ export default function LotCard({ lot }: LotCardProps) {
   const [time, setTime] = useState(() => getTimeRemaining(lot.endTime, lot.startTime));
   const [isFav, setIsFav] = useState(false);
   const [sellerReviews, setSellerReviews] = useState<SellerReviewsResponse | null>(null);
+  const [sellerTrust, setSellerTrust] = useState<SellerTrustScoreResponse | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -60,12 +61,19 @@ export default function LotCard({ lot }: LotCardProps) {
     if (!lot.sellerId) return;
 
     let isMounted = true;
-    api.get<SellerReviewsResponse>(API_ENDPOINTS.SELLERS.REVIEWS(lot.sellerId))
-      .then((response) => {
-        if (isMounted) setSellerReviews(response.data);
+    Promise.all([
+      api.get<SellerReviewsResponse>(API_ENDPOINTS.SELLERS.REVIEWS(lot.sellerId)),
+      api.get<SellerTrustScoreResponse>(API_ENDPOINTS.SELLERS.TRUST(lot.sellerId)),
+    ])
+      .then(([reviewsResponse, trustResponse]) => {
+        if (!isMounted) return;
+        setSellerReviews(reviewsResponse.data);
+        setSellerTrust(trustResponse.data);
       })
       .catch(() => {
-        if (isMounted) setSellerReviews(null);
+        if (!isMounted) return;
+        setSellerReviews(null);
+        setSellerTrust(null);
       });
 
     return () => {
@@ -144,6 +152,11 @@ export default function LotCard({ lot }: LotCardProps) {
             <span>Новый продавец</span>
           )}
         </div>
+        {sellerTrust && (
+          <div className="mb-[10px] inline-flex items-center rounded bg-bg2 border border-border px-2 py-[3px] text-[10.5px] text-text2">
+            Надёжность {sellerTrust.score}/100
+          </div>
+        )}
         {lot.supportedDeliveryProviders && lot.supportedDeliveryProviders.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-[10px]">
             {lot.supportedDeliveryProviders.map((provider) => (
