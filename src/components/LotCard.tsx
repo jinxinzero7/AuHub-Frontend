@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 import { formatPrice, getTimeRemaining, formatTime } from "@/lib/utils";
 import api from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/constants";
-import type { SellerReviewsResponse, SellerTrustScoreResponse } from "@/types";
+import type { PublicUserProfileResponse, SellerReviewsResponse, SellerTrustScoreResponse } from "@/types";
 
 interface LotCardProps {
   lot: {
@@ -49,6 +49,7 @@ export default function LotCard({ lot }: LotCardProps) {
   const [isFav, setIsFav] = useState(false);
   const [sellerReviews, setSellerReviews] = useState<SellerReviewsResponse | null>(null);
   const [sellerTrust, setSellerTrust] = useState<SellerTrustScoreResponse | null>(null);
+  const [sellerProfile, setSellerProfile] = useState<PublicUserProfileResponse | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -64,16 +65,19 @@ export default function LotCard({ lot }: LotCardProps) {
     Promise.all([
       api.get<SellerReviewsResponse>(API_ENDPOINTS.SELLERS.REVIEWS(lot.sellerId)),
       api.get<SellerTrustScoreResponse>(API_ENDPOINTS.SELLERS.TRUST(lot.sellerId)),
+      api.get<PublicUserProfileResponse>(API_ENDPOINTS.AUTH.PUBLIC_PROFILE(lot.sellerId)),
     ])
-      .then(([reviewsResponse, trustResponse]) => {
+      .then(([reviewsResponse, trustResponse, profileResponse]) => {
         if (!isMounted) return;
         setSellerReviews(reviewsResponse.data);
         setSellerTrust(trustResponse.data);
+        setSellerProfile(profileResponse.data);
       })
       .catch(() => {
         if (!isMounted) return;
         setSellerReviews(null);
         setSellerTrust(null);
+        setSellerProfile(null);
       });
 
     return () => {
@@ -152,11 +156,18 @@ export default function LotCard({ lot }: LotCardProps) {
             <span>Новый продавец</span>
           )}
         </div>
-        {sellerTrust && (
-          <div className="mb-[10px] inline-flex items-center rounded bg-bg2 border border-border px-2 py-[3px] text-[10.5px] text-text2">
-            Надёжность {sellerTrust.score}/100
-          </div>
-        )}
+        <div className="mb-[10px] flex flex-wrap gap-1">
+          {sellerTrust && (
+            <span className="inline-flex items-center rounded bg-bg2 border border-border px-2 py-[3px] text-[10.5px] text-text2">
+              Надёжность {sellerTrust.score}/100
+            </span>
+          )}
+          {sellerProfile?.documentVerificationStatus === "Verified" && (
+            <span className="inline-flex items-center rounded bg-green-50 border border-green-200 px-2 py-[3px] text-[10.5px] text-green-700">
+              Документы
+            </span>
+          )}
+        </div>
         {lot.supportedDeliveryProviders && lot.supportedDeliveryProviders.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-[10px]">
             {lot.supportedDeliveryProviders.map((provider) => (

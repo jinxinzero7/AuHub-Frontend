@@ -21,6 +21,7 @@ export const API_ENDPOINTS = {
     CONFIRM_PHONE_VERIFICATION: '/api/auth/phone-verification/confirm',
     CREATE_DOCUMENT_VERIFICATION: '/api/auth/document-verification/request',
     MY_DOCUMENT_VERIFICATIONS: '/api/auth/document-verification/my',
+    PUBLIC_PROFILE: (userId: string) => `/api/auth/users/${userId}/public-profile`,
   },
   LOTS: {
     LIST: '/api/lots',

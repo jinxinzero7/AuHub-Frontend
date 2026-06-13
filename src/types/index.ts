@@ -100,6 +100,13 @@ export interface SellerTrustScoreResponse {
   sellerLostDisputes: number;
 }
 
+export interface PublicUserProfileResponse {
+  userId: string;
+  nickname: string;
+  name: string;
+  documentVerificationStatus: string;
+}
+
 export interface CreateReviewRequest {
   rating: number;
   comment?: string;

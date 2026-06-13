@@ -11,7 +11,7 @@ import ImageUpload from "@/components/ImageUpload";
 import { calculateSellerPayout, calculateServiceFee, formatPrice, formatDate } from "@/lib/utils";
 import api from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/constants";
-import type { Bid, SellerReviewsResponse, SellerTrustScoreResponse } from "@/types";
+import type { Bid, PublicUserProfileResponse, SellerReviewsResponse, SellerTrustScoreResponse } from "@/types";
 
 interface LotImage {
   id: string;
@@ -78,6 +78,7 @@ export default function LotDetailClient({
   const [isShipping, setIsShipping] = useState(false);
   const [sellerReviews, setSellerReviews] = useState<SellerReviewsResponse | null>(null);
   const [sellerTrust, setSellerTrust] = useState<SellerTrustScoreResponse | null>(null);
+  const [sellerProfile, setSellerProfile] = useState<PublicUserProfileResponse | null>(null);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [reviewError, setReviewError] = useState<string | null>(null);
@@ -116,16 +117,19 @@ export default function LotDetailClient({
 
   const refreshSellerReviews = useCallback(async () => {
     try {
-      const [reviewsResponse, trustResponse] = await Promise.all([
+      const [reviewsResponse, trustResponse, profileResponse] = await Promise.all([
         api.get<SellerReviewsResponse>(API_ENDPOINTS.SELLERS.REVIEWS(sellerId)),
         api.get<SellerTrustScoreResponse>(API_ENDPOINTS.SELLERS.TRUST(sellerId)),
+        api.get<PublicUserProfileResponse>(API_ENDPOINTS.AUTH.PUBLIC_PROFILE(sellerId)),
       ]);
       setSellerReviews(reviewsResponse.data);
       setSellerTrust(trustResponse.data);
+      setSellerProfile(profileResponse.data);
     } catch (err) {
       console.error("Failed to fetch seller reviews:", err);
       setSellerReviews(null);
       setSellerTrust(null);
+      setSellerProfile(null);
     }
   }, [sellerId]);
 
@@ -134,17 +138,20 @@ export default function LotDetailClient({
     Promise.all([
       api.get<SellerReviewsResponse>(API_ENDPOINTS.SELLERS.REVIEWS(sellerId)),
       api.get<SellerTrustScoreResponse>(API_ENDPOINTS.SELLERS.TRUST(sellerId)),
+      api.get<PublicUserProfileResponse>(API_ENDPOINTS.AUTH.PUBLIC_PROFILE(sellerId)),
     ])
-      .then(([reviewsResponse, trustResponse]) => {
+      .then(([reviewsResponse, trustResponse, profileResponse]) => {
         if (!isMounted) return;
         setSellerReviews(reviewsResponse.data);
         setSellerTrust(trustResponse.data);
+        setSellerProfile(profileResponse.data);
       })
       .catch((err) => {
         console.error("Failed to fetch seller reviews:", err);
         if (!isMounted) return;
         setSellerReviews(null);
         setSellerTrust(null);
+        setSellerProfile(null);
       });
 
     return () => {
@@ -370,6 +377,11 @@ export default function LotDetailClient({
                 {sellerReviews?.reviewsCount ?? 0} отзывов
               </div>
             </div>
+            {sellerProfile?.documentVerificationStatus === "Verified" && (
+              <div className="mt-3 inline-flex items-center rounded bg-green-50 border border-green-200 px-2 py-[4px] text-[12px] font-medium text-green-700">
+                Документы продавца подтверждены
+              </div>
+            )}
             {sellerTrust && (
               <div className="mt-3 rounded-[8px] border border-border bg-bg2 px-3 py-2">
                 <div className="flex items-center justify-between gap-3 text-[13px]">
