@@ -50,6 +50,11 @@ export interface CreateDocumentVerificationRequest {
   selfieImagePath: string;
 }
 
+export interface DocumentVerificationUploadResponse {
+  passportImagePath: string;
+  selfieImagePath: string;
+}
+
 export interface Lot {
   id: string;
   title: string;

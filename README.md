@@ -128,8 +128,8 @@ Current verified state:
 - login accepts email or phone;
 - profile shows email/phone verification states;
 - profile can request email/phone verification and submit email token / SMS code;
-- profile can submit document verification requests with private image paths/keys for MVP/demo;
-- admin documents page can approve/reject pending document verification requests;
+- profile uploads passport/selfie images and submits document verification requests with private object keys;
+- admin documents page can open protected document files and approve/reject pending document verification requests;
 - public registration no longer exposes Admin role selection.
 
 ---

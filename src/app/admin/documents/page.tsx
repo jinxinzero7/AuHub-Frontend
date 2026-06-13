@@ -43,6 +43,19 @@ export default function AdminDocumentsPage() {
     }
   };
 
+  const openDocumentFile = async (id: string, fileType: "passport" | "selfie") => {
+    try {
+      const response = await api.get(API_ENDPOINTS.ADMIN.DOCUMENT_VERIFICATION_FILE(id, fileType), {
+        responseType: "blob",
+      });
+      const url = URL.createObjectURL(response.data);
+      window.open(url, "_blank", "noopener,noreferrer");
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (err) {
+      console.error(`Failed to open document verification file ${id}/${fileType}:`, err);
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-12 text-text3 text-[13px]">Загрузка...</div>;
   }
@@ -67,6 +80,23 @@ export default function AdminDocumentsPage() {
                 <div className="text-[12px] text-text2 break-all">User ID: {request.userId}</div>
                 <div className="text-[12px] text-text2 break-all">Паспорт: {request.passportImagePath}</div>
                 <div className="text-[12px] text-text2 break-all">Селфи: {request.selfieImagePath}</div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                <button
+                  type="button"
+                  onClick={() => openDocumentFile(request.id, "passport")}
+                  className="w-full sm:w-auto px-4 py-2 rounded-[7px] border border-border text-text text-[13px] font-medium font-ui hover:border-gold transition-colors"
+                >
+                  Открыть паспорт
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openDocumentFile(request.id, "selfie")}
+                  className="w-full sm:w-auto px-4 py-2 rounded-[7px] border border-border text-text text-[13px] font-medium font-ui hover:border-gold transition-colors"
+                >
+                  Открыть селфи
+                </button>
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center gap-2">

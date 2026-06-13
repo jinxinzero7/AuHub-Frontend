@@ -11,6 +11,7 @@ import type {
   BasicSuccessResponse,
   CreateDocumentVerificationRequest,
   DocumentVerificationRequest,
+  DocumentVerificationUploadResponse,
   Lot,
   MyBidsGroup,
   BalanceResponse,
@@ -225,8 +226,8 @@ function DocumentVerificationControls({
   user: User;
   refreshSession: () => Promise<void>;
 }) {
-  const [passportImagePath, setPassportImagePath] = useState("");
-  const [selfieImagePath, setSelfieImagePath] = useState("");
+  const [passportImage, setPassportImage] = useState<File | null>(null);
+  const [selfieImage, setSelfieImage] = useState<File | null>(null);
   const [requests, setRequests] = useState<DocumentVerificationRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -242,25 +243,35 @@ function DocumentVerificationControls({
     setError("");
     setMessage("");
 
-    const request: CreateDocumentVerificationRequest = {
-      passportImagePath: passportImagePath.trim(),
-      selfieImagePath: selfieImagePath.trim(),
-    };
-
-    if (!request.passportImagePath || !request.selfieImagePath) {
-      setError("Укажите оба пути к изображениям");
+    if (!passportImage || !selfieImage) {
+      setError("Загрузите разворот паспорта и селфи с паспортом");
       return;
     }
 
     setLoading(true);
     try {
+      const formData = new FormData();
+      formData.append("passportImage", passportImage);
+      formData.append("selfieImage", selfieImage);
+
+      const uploadResponse = await api.post<DocumentVerificationUploadResponse>(
+        API_ENDPOINTS.AUTH.UPLOAD_DOCUMENT_VERIFICATION_FILES,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } },
+      );
+
+      const request: CreateDocumentVerificationRequest = {
+        passportImagePath: uploadResponse.data.passportImagePath,
+        selfieImagePath: uploadResponse.data.selfieImagePath,
+      };
+
       const response = await api.post<DocumentVerificationRequest>(
         API_ENDPOINTS.AUTH.CREATE_DOCUMENT_VERIFICATION,
         request,
       );
       setRequests((prev) => [response.data, ...prev]);
-      setPassportImagePath("");
-      setSelfieImagePath("");
+      setPassportImage(null);
+      setSelfieImage(null);
       await refreshSession();
       setMessage("Заявка отправлена на проверку");
     } catch (err) {
@@ -288,15 +299,15 @@ function DocumentVerificationControls({
       {!isVerified && !hasPendingRequest && (
         <div className="space-y-2">
           <input
-            value={passportImagePath}
-            onChange={(e) => setPassportImagePath(e.target.value)}
-            placeholder="private/passport-spread.jpg"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={(e) => setPassportImage(e.target.files?.[0] ?? null)}
             className="w-full px-3 py-2 text-[13px] bg-bg2 border border-border rounded-[7px] text-text placeholder:text-text3 outline-none font-ui focus:border-gold"
           />
           <input
-            value={selfieImagePath}
-            onChange={(e) => setSelfieImagePath(e.target.value)}
-            placeholder="private/selfie-with-passport.jpg"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={(e) => setSelfieImage(e.target.files?.[0] ?? null)}
             className="w-full px-3 py-2 text-[13px] bg-bg2 border border-border rounded-[7px] text-text placeholder:text-text3 outline-none font-ui focus:border-gold"
           />
           <button

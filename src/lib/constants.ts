@@ -19,6 +19,7 @@ export const API_ENDPOINTS = {
     CONFIRM_EMAIL_VERIFICATION: '/api/auth/email-verification/confirm',
     REQUEST_PHONE_VERIFICATION: '/api/auth/phone-verification/request',
     CONFIRM_PHONE_VERIFICATION: '/api/auth/phone-verification/confirm',
+    UPLOAD_DOCUMENT_VERIFICATION_FILES: '/api/auth/document-verification/upload',
     CREATE_DOCUMENT_VERIFICATION: '/api/auth/document-verification/request',
     MY_DOCUMENT_VERIFICATIONS: '/api/auth/document-verification/my',
     PUBLIC_PROFILE: (userId: string) => `/api/auth/users/${userId}/public-profile`,
@@ -64,6 +65,7 @@ export const API_ENDPOINTS = {
     DOCUMENT_VERIFICATION_PENDING: '/api/auth/document-verification/pending',
     DOCUMENT_VERIFICATION_APPROVE: (id: string) => `/api/auth/document-verification/${id}/approve`,
     DOCUMENT_VERIFICATION_REJECT: (id: string) => `/api/auth/document-verification/${id}/reject`,
+    DOCUMENT_VERIFICATION_FILE: (id: string, fileType: 'passport' | 'selfie') => `/api/auth/document-verification/${id}/files/${fileType}`,
   },
   IMAGES: {
     UPLOAD: (lotId: string) => `/api/lots/${lotId}/images`,
