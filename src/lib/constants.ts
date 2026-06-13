@@ -49,6 +49,7 @@ export const API_ENDPOINTS = {
     BALANCE: '/api/payment/balance',
     TRANSACTIONS: '/api/payment/transactions',
     TOPUP: '/api/payment/topup',
+    TOPUP_CHECKOUT: '/api/payment/topup/checkout',
   },
   NOTIFICATIONS: {
     LIST: '/api/notifications',

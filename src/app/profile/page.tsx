@@ -16,6 +16,7 @@ import type {
   MyBidsGroup,
   BalanceResponse,
   TransactionItem,
+  TopUpCheckoutResponse,
   SellerReviewsResponse,
   SellerTrustScoreResponse,
   User,
@@ -583,10 +584,11 @@ function BalanceTab() {
   const [topUpAmount, setTopUpAmount] = useState("");
   const [loading, setLoading] = useState(true);
   const [topUpLoading, setTopUpLoading] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const fetchBalance = async () => {
     try {
-      const res = await api.get("/api/payment/balance");
+      const res = await api.get(API_ENDPOINTS.PAYMENT.BALANCE);
       setBalance(res.data);
     } catch (err) {
       console.error("Failed to fetch balance:", err);
@@ -595,7 +597,7 @@ function BalanceTab() {
 
   const fetchTransactions = async () => {
     try {
-      const res = await api.get("/api/payment/transactions");
+      const res = await api.get(API_ENDPOINTS.PAYMENT.TRANSACTIONS);
       setTransactions(res.data.transactions ?? res.data.items ?? []);
     } catch (err) {
       console.error("Failed to fetch transactions:", err);
@@ -613,13 +615,28 @@ function BalanceTab() {
     if (!amount || amount <= 0) return;
     setTopUpLoading(true);
     try {
-      await api.post("/api/payment/topup", { amount });
+      await api.post(API_ENDPOINTS.PAYMENT.TOPUP, { amount });
       setTopUpAmount("");
       await fetchBalance();
       await fetchTransactions();
     } catch (err) {
       console.error("Failed to top up:", err);
     } finally { setTopUpLoading(false); }
+  };
+
+  const handleProviderCheckout = async () => {
+    const amount = parseFloat(topUpAmount);
+    if (!amount || amount <= 0) return;
+    setCheckoutLoading(true);
+    try {
+      const response = await api.post<TopUpCheckoutResponse>(
+        API_ENDPOINTS.PAYMENT.TOPUP_CHECKOUT,
+        { amount },
+      );
+      window.open(response.data.paymentUrl, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      console.error("Failed to create top-up checkout:", err);
+    } finally { setCheckoutLoading(false); }
   };
 
   if (loading) return <div className="text-center py-8 text-text3 text-[13px]">Загрузка...</div>;
@@ -649,6 +666,13 @@ function BalanceTab() {
           >
             <Plus className="w-3.5 h-3.5" />
             Пополнить
+          </button>
+          <button
+            onClick={handleProviderCheckout}
+            disabled={checkoutLoading || !topUpAmount}
+            className="px-4 py-2 rounded-[7px] border border-border text-text text-[13px] font-medium font-ui hover:border-gold transition-colors disabled:opacity-50"
+          >
+            Robokassa
           </button>
         </div>
       </div>

@@ -199,3 +199,12 @@ export interface TransactionItem {
 export interface TopUpRequest {
   amount: number;
 }
+
+export interface TopUpCheckoutResponse {
+  success: boolean;
+  provider: string;
+  operationId: string;
+  invoiceId: number;
+  paymentUrl: string;
+  isTest: boolean;
+}
