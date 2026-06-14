@@ -2,9 +2,9 @@ import { defineConfig, devices } from "@playwright/test";
 
 const port = Number(process.env.E2E_PORT ?? 3000);
 const apiPort = Number(process.env.E2E_API_PORT ?? 59999);
-const baseURL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${port}`;
-const fallbackApiURL = `http://127.0.0.1:${apiPort}`;
 const isFullStack = process.env.E2E_FULL_STACK === "true";
+const baseURL = process.env.E2E_BASE_URL ?? `http://${isFullStack ? "localhost" : "127.0.0.1"}:${port}`;
+const fallbackApiURL = `http://127.0.0.1:${apiPort}`;
 const apiURL = process.env.E2E_GATEWAY_URL ?? process.env.NEXT_PUBLIC_API_URL ?? fallbackApiURL;
 
 export default defineConfig({

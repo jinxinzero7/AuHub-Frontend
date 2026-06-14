@@ -18,6 +18,12 @@ async function readJson(response: APIResponse, label: string) {
   return body ? JSON.parse(body) : {};
 }
 
+async function expectOk(response: APIResponse, label: string) {
+  const body = await response.text();
+  expect(response.ok(), `${label} failed: ${response.status()} ${body}`).toBeTruthy();
+  return body;
+}
+
 function authHeaders(token: string) {
   return { Authorization: `Bearer ${token}` };
 }
@@ -54,7 +60,7 @@ test.describe("full-stack marketplace smoke", () => {
     const api = await request.newContext({ baseURL: gatewayURL });
 
     try {
-      await readJson(await api.get("/health"), "gateway health");
+      await expectOk(await api.get("/health"), "gateway health");
 
       const seller = await registerUser(api, "seller");
       const buyer = await registerUser(api, "buyer");
@@ -93,10 +99,17 @@ test.describe("full-stack marketplace smoke", () => {
       }, { accessToken: buyer.accessToken, refreshToken: buyer.refreshToken });
 
       await page.goto(`/lots/${lotId}`);
-      await expect(page.getByText(title)).toBeVisible();
+      await expect(page.getByRole("heading", { name: title })).toBeVisible();
 
+      const bidResponsePromise = page.waitForResponse((response) =>
+        response.url().includes(`/api/lots/${lotId}/bids`) &&
+        response.request().method() === "POST"
+      );
+      const bidForm = page.locator("form").filter({ has: page.locator('input[type="number"]') });
       await page.locator('input[type="number"]').fill("1200");
-      await page.locator('input[type="number"]').press("Enter");
+      await bidForm.locator('button[type="submit"]').click();
+      const bidResponse = await bidResponsePromise;
+      expect(bidResponse.ok(), `bid failed: ${bidResponse.status()} ${await bidResponse.text()}`).toBeTruthy();
 
       const lotAfterBid = await readJson(await api.get(`/api/lots/${lotId}`), "get lot after bid") as {
         currentPrice: number;

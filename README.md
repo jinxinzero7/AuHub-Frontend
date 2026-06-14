@@ -116,7 +116,7 @@ npm run test:e2e  # Playwright smoke tests
 Current verified state:
 - `npm run build` passes without Google Fonts network dependency;
 - `npm run lint` passes with 0 errors and 0 warnings;
-- `npm run test:e2e` runs 4 Playwright Chromium smoke tests with a local E2E mock API; the full-stack marketplace spec is present but skipped unless enabled explicitly;
+- `npm run test:e2e` runs 4 Playwright Chromium smoke tests with a local E2E mock API; the full-stack marketplace spec is present, verified, and skipped unless enabled explicitly;
 - fonts are CSS system stacks defined in `src/app/globals.css`;
 - seller-facing lot creation/detail/profile screens show payout after the 1% service fee;
 - balance tab supports local demo top-up and Robokassa demo checkout redirect;
@@ -158,6 +158,7 @@ npm run test:e2e -- e2e/full-stack-marketplace.spec.ts
 ```
 
 The full-stack spec currently covers seller registration, lot creation/submission, admin approval, buyer top-up and buyer bid through the UI.
+Verified full-stack command uses `localhost:3000` as browser origin because Gateway CORS currently allows `http://localhost:3000`.
 Detailed E2E setup and manual fallback checklist live in `docs/e2e.md`.
 
 ---

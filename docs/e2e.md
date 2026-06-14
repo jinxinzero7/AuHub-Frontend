@@ -53,6 +53,8 @@ $env:E2E_ADMIN_PASSWORD = "<seeded-admin-password>"
 npm.cmd run test:e2e -- e2e/full-stack-marketplace.spec.ts
 ```
 
+By default, full-stack mode opens `http://localhost:3000` because Gateway CORS currently allows the `localhost` frontend origin. Do not switch the browser origin to `127.0.0.1:3000` unless Gateway CORS is updated too.
+
 Current full-stack spec flow:
 1. Check Gateway `/health`.
 2. Register a unique seller.
@@ -65,6 +67,10 @@ Current full-stack spec flow:
 9. Browser opens the real lot detail page.
 10. Buyer places a bid through the UI.
 11. API verifies the lot is still `Active` and `currentPrice` is updated.
+
+Verified on 2026-06-14 against a local Docker-backed stack:
+- `npm.cmd run test:e2e` -> 4 passed, 1 skipped;
+- `E2E_FULL_STACK=true npm.cmd run test:e2e -- e2e/full-stack-marketplace.spec.ts` -> 1 passed.
 
 ## Manual Demo Fallback
 
