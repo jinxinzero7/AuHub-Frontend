@@ -4,6 +4,8 @@ const port = Number(process.env.E2E_PORT ?? 3000);
 const apiPort = Number(process.env.E2E_API_PORT ?? 59999);
 const baseURL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${port}`;
 const fallbackApiURL = `http://127.0.0.1:${apiPort}`;
+const isFullStack = process.env.E2E_FULL_STACK === "true";
+const apiURL = process.env.E2E_GATEWAY_URL ?? process.env.NEXT_PUBLIC_API_URL ?? fallbackApiURL;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -22,7 +24,18 @@ export default defineConfig({
     screenshot: "only-on-failure",
     video: "retain-on-failure",
   },
-  webServer: [
+  webServer: isFullStack ? [
+    {
+      command: `npm run dev -- --hostname 127.0.0.1 --port ${port}`,
+      url: baseURL,
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+      env: {
+        NEXT_PUBLIC_API_URL: apiURL,
+        INTERNAL_API_URL: process.env.INTERNAL_API_URL ?? apiURL,
+      },
+    },
+  ] : [
     {
       command: `node e2e/mock-api.mjs --port ${apiPort}`,
       url: `${fallbackApiURL}/health`,
@@ -35,8 +48,8 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
       env: {
-        NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? fallbackApiURL,
-        INTERNAL_API_URL: process.env.INTERNAL_API_URL ?? fallbackApiURL,
+        NEXT_PUBLIC_API_URL: apiURL,
+        INTERNAL_API_URL: process.env.INTERNAL_API_URL ?? apiURL,
       },
     },
   ],

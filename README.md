@@ -116,7 +116,7 @@ npm run test:e2e  # Playwright smoke tests
 Current verified state:
 - `npm run build` passes without Google Fonts network dependency;
 - `npm run lint` passes with 0 errors and 0 warnings;
-- `npm run test:e2e` runs 4 Playwright Chromium smoke tests with a local E2E mock API;
+- `npm run test:e2e` runs 4 Playwright Chromium smoke tests with a local E2E mock API; the full-stack marketplace spec is present but skipped unless enabled explicitly;
 - fonts are CSS system stacks defined in `src/app/globals.css`;
 - seller-facing lot creation/detail/profile screens show payout after the 1% service fee;
 - balance tab supports local demo top-up and Robokassa demo checkout redirect;
@@ -147,7 +147,17 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Full marketplace E2E through Docker/Gateway/backend services is still a separate planned step.
+There is also an opt-in full-stack marketplace spec. It requires a running AuHub backend/Gateway and a seeded admin account:
+
+```bash
+$env:E2E_FULL_STACK="true"
+$env:E2E_GATEWAY_URL="http://127.0.0.1:5000"
+$env:E2E_ADMIN_EMAIL="<seeded-admin-email>"
+$env:E2E_ADMIN_PASSWORD="<seeded-admin-password>"
+npm run test:e2e -- e2e/full-stack-marketplace.spec.ts
+```
+
+The full-stack spec currently covers seller registration, lot creation/submission, admin approval, buyer top-up and buyer bid through the UI.
 
 ---
 
