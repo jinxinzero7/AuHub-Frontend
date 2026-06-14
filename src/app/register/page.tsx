@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   validateEmail,
   validateName,
@@ -30,21 +30,21 @@ export default function RegisterPage() {
     e.preventDefault();
     setServerError("");
 
-    const newErrors: Record<string, string> = {};
-    const nameErr = validateName(name);
-    const nicknameErr = validateNickname(nickname);
-    const phoneErr = validatePhoneNumber(phoneNumber);
-    const emailErr = validateEmail(email);
-    const passErr = validatePassword(password);
+    const nextErrors: Record<string, string> = {};
+    const nameError = validateName(name);
+    const nicknameError = validateNickname(nickname);
+    const phoneError = validatePhoneNumber(phoneNumber);
+    const emailError = validateEmail(email);
+    const passwordError = validatePassword(password);
 
-    if (nameErr) newErrors.name = nameErr;
-    if (nicknameErr) newErrors.nickname = nicknameErr;
-    if (phoneErr) newErrors.phoneNumber = phoneErr;
-    if (emailErr) newErrors.email = emailErr;
-    if (passErr) newErrors.password = passErr;
+    if (nameError) nextErrors.name = nameError;
+    if (nicknameError) nextErrors.nickname = nicknameError;
+    if (phoneError) nextErrors.phoneNumber = phoneError;
+    if (emailError) nextErrors.email = emailError;
+    if (passwordError) nextErrors.password = passwordError;
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
       return;
     }
 
@@ -56,131 +56,158 @@ export default function RegisterPage() {
     } catch (err: unknown) {
       if (err instanceof Error && "response" in err) {
         const axiosErr = err as { response?: { data?: { errors?: { generalErrors?: string[] } } } };
-        setServerError(axiosErr.response?.data?.errors?.generalErrors?.[0] || "Ошибка регистрации");
+        setServerError(axiosErr.response?.data?.errors?.generalErrors?.[0] || "Не удалось зарегистрироваться");
       } else {
-        setServerError("Ошибка регистрации");
+        setServerError("Не удалось зарегистрироваться");
       }
     } finally {
       setIsLoading(false);
     }
   };
 
+  const fieldClass = (field: string) =>
+    `w-full rounded-[7px] border bg-bg2 px-3 py-2.5 text-[14px] text-text outline-none transition-colors placeholder:text-text3 ${errors[field] ? "border-danger" : "border-border focus:border-gold"}`;
+
   return (
-    <div className="min-h-[calc(100vh-58px)] flex items-center justify-center px-4 py-12 bg-bg">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link href="/" className="font-heading text-[28px] font-semibold tracking-[-0.5px]">
-            <span className="text-gold">Au</span>
-            <span className="text-text">Hub</span>
-          </Link>
-          <p className="text-text2 mt-2 text-[14px] font-light">Создайте аккаунт</p>
-        </div>
-
-        <div className="bg-surface border border-border rounded-[10px] p-8">
-          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-            {serverError && (
-              <div className="text-[13px] text-danger bg-danger-bg border border-danger/20 rounded-[7px] px-4 py-2.5">
-                {serverError}
-              </div>
-            )}
-
-            <div>
-              <label htmlFor="name" className="block text-[13px] font-medium text-text2 mb-1.5">
-                Имя
-              </label>
-              <input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => { setName(e.target.value); clearFieldError("name"); }}
-                className={`w-full px-3 py-2.5 text-[14px] bg-bg2 border rounded-[7px] text-text placeholder:text-text3 outline-none transition-colors font-ui ${errors.name ? "border-danger" : "border-border focus:border-gold"}`}
-                placeholder="Ваше имя"
-                autoComplete="name"
-              />
-              {errors.name && <p className="text-[12px] text-danger mt-1">{errors.name}</p>}
-            </div>
-
-            <div>
-              <label htmlFor="nickname" className="block text-[13px] font-medium text-text2 mb-1.5">
-                Никнейм
-              </label>
-              <input
-                id="nickname"
-                type="text"
-                value={nickname}
-                onChange={(e) => { setNickname(e.target.value); clearFieldError("nickname"); }}
-                className={`w-full px-3 py-2.5 text-[14px] bg-bg2 border rounded-[7px] text-text placeholder:text-text3 outline-none transition-colors font-ui ${errors.nickname ? "border-danger" : "border-border focus:border-gold"}`}
-                placeholder="nickname_123"
-                autoComplete="username"
-              />
-              {errors.nickname && <p className="text-[12px] text-danger mt-1">{errors.nickname}</p>}
-            </div>
-
-            <div>
-              <label htmlFor="phoneNumber" className="block text-[13px] font-medium text-text2 mb-1.5">
-                Телефон
-              </label>
-              <input
-                id="phoneNumber"
-                type="tel"
-                value={phoneNumber}
-                onChange={(e) => { setPhoneNumber(e.target.value); clearFieldError("phoneNumber"); }}
-                className={`w-full px-3 py-2.5 text-[14px] bg-bg2 border rounded-[7px] text-text placeholder:text-text3 outline-none transition-colors font-ui ${errors.phoneNumber ? "border-danger" : "border-border focus:border-gold"}`}
-                placeholder="+79990000000"
-                autoComplete="tel"
-              />
-              {errors.phoneNumber && <p className="text-[12px] text-danger mt-1">{errors.phoneNumber}</p>}
-            </div>
-
-            <div>
-              <label htmlFor="email" className="block text-[13px] font-medium text-text2 mb-1.5">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => { setEmail(e.target.value); clearFieldError("email"); }}
-                className={`w-full px-3 py-2.5 text-[14px] bg-bg2 border rounded-[7px] text-text placeholder:text-text3 outline-none transition-colors font-ui ${errors.email ? "border-danger" : "border-border focus:border-gold"}`}
-                placeholder="your@email.com"
-                autoComplete="email"
-              />
-              {errors.email && <p className="text-[12px] text-danger mt-1">{errors.email}</p>}
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-[13px] font-medium text-text2 mb-1.5">
-                Пароль
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => { setPassword(e.target.value); clearFieldError("password"); }}
-                className={`w-full px-3 py-2.5 text-[14px] bg-bg2 border rounded-[7px] text-text placeholder:text-text3 outline-none transition-colors font-ui ${errors.password ? "border-danger" : "border-border focus:border-gold"}`}
-                placeholder="Минимум 8 символов"
-                autoComplete="new-password"
-              />
-              {errors.password && <p className="text-[12px] text-danger mt-1">{errors.password}</p>}
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-2.5 rounded-[7px] border-none bg-gold text-[#FFF8E8] text-[14px] font-medium cursor-pointer font-ui hover:bg-gold-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? "Регистрация..." : "Зарегистрироваться"}
-            </button>
-          </form>
-
-          <div className="mt-6 text-center text-[13px] text-text2">
-            Уже есть аккаунт?{" "}
-            <Link href="/login" className="text-gold hover:text-gold-hover transition-colors">
-              Войти
+    <main id="main-content" className="min-h-screen bg-bg px-4 py-10">
+      <div className="mx-auto flex min-h-[calc(100vh-80px)] w-full max-w-[980px] items-center justify-center">
+        <div className="grid w-full overflow-hidden rounded-[8px] border border-border bg-surface shadow-sm lg:grid-cols-[0.85fr_1.15fr]">
+          <section className="border-b border-border bg-surface2 p-6 lg:border-b-0 lg:border-r lg:p-8">
+            <Link href="/" className="text-[26px] font-semibold text-text">
+              <span className="text-gold">Au</span>Hub
             </Link>
-          </div>
+            <h1 className="mt-8 text-[28px] font-semibold leading-tight text-text">
+              Создание аккаунта
+            </h1>
+            <p className="mt-3 text-[14px] leading-6 text-text2">
+              Профиль нужен для ставок, продажи лотов, рейтинга продавца и подтверждения контактов.
+            </p>
+          </section>
+
+          <section className="p-6 lg:p-8">
+            <form onSubmit={handleSubmit} className="grid gap-5 sm:grid-cols-2" noValidate>
+              {serverError && (
+                <div
+                  className="sm:col-span-2 rounded-[7px] border border-danger/20 bg-danger-bg px-4 py-2.5 text-[13px] text-danger"
+                  role="alert"
+                >
+                  {serverError}
+                </div>
+              )}
+
+              <div>
+                <label htmlFor="name" className="mb-1.5 block text-[13px] font-medium text-text2">
+                  Имя
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    clearFieldError("name");
+                  }}
+                  className={fieldClass("name")}
+                  placeholder="Ваше имя"
+                  autoComplete="name"
+                />
+                {errors.name && <p className="text-danger mt-1 text-[12px]">{errors.name}</p>}
+              </div>
+
+              <div>
+                <label htmlFor="nickname" className="mb-1.5 block text-[13px] font-medium text-text2">
+                  Никнейм
+                </label>
+                <input
+                  id="nickname"
+                  type="text"
+                  value={nickname}
+                  onChange={(e) => {
+                    setNickname(e.target.value);
+                    clearFieldError("nickname");
+                  }}
+                  className={fieldClass("nickname")}
+                  placeholder="nickname_123"
+                  autoComplete="username"
+                />
+                {errors.nickname && <p className="text-danger mt-1 text-[12px]">{errors.nickname}</p>}
+              </div>
+
+              <div>
+                <label htmlFor="phoneNumber" className="mb-1.5 block text-[13px] font-medium text-text2">
+                  Телефон
+                </label>
+                <input
+                  id="phoneNumber"
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => {
+                    setPhoneNumber(e.target.value);
+                    clearFieldError("phoneNumber");
+                  }}
+                  className={fieldClass("phoneNumber")}
+                  placeholder="+79990000000"
+                  autoComplete="tel"
+                />
+                {errors.phoneNumber && <p className="text-danger mt-1 text-[12px]">{errors.phoneNumber}</p>}
+              </div>
+
+              <div>
+                <label htmlFor="email" className="mb-1.5 block text-[13px] font-medium text-text2">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    clearFieldError("email");
+                  }}
+                  className={fieldClass("email")}
+                  placeholder="your@email.com"
+                  autoComplete="email"
+                />
+                {errors.email && <p className="text-danger mt-1 text-[12px]">{errors.email}</p>}
+              </div>
+
+              <div className="sm:col-span-2">
+                <label htmlFor="password" className="mb-1.5 block text-[13px] font-medium text-text2">
+                  Пароль
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    clearFieldError("password");
+                  }}
+                  className={fieldClass("password")}
+                  placeholder="Минимум 8 символов"
+                  autoComplete="new-password"
+                />
+                {errors.password && <p className="text-danger mt-1 text-[12px]">{errors.password}</p>}
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="sm:col-span-2 rounded-[7px] bg-gold py-2.5 text-[14px] font-medium text-white transition-colors hover:bg-gold-hover disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isLoading ? "Создаём аккаунт..." : "Зарегистрироваться"}
+              </button>
+            </form>
+
+            <p className="mt-6 text-center text-[13px] text-text2">
+              Уже есть аккаунт?{" "}
+              <Link href="/login" className="font-medium text-gold transition-colors hover:text-gold-hover">
+                Войти
+              </Link>
+            </p>
+          </section>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
+import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
-import { validateLotTitle, validateLotDescription, validateStartingPrice } from "@/lib/validation";
 import { calculateSellerPayout, calculateServiceFee, formatPrice } from "@/lib/utils";
+import { validateLotDescription, validateLotTitle, validateStartingPrice } from "@/lib/validation";
 
 const DURATION_PRESETS = [
   { label: "24 часа", hours: 24 },
@@ -37,12 +38,18 @@ export default function CreateLotPage() {
     return (
       <>
         <Header />
-        <main className="bg-bg min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="font-heading text-[28px] text-text mb-2">Доступ запрещён</h1>
-            <p className="text-text2 text-[14px] font-light">
-              Только авторизованные пользователи могут создавать лоты
+        <main id="main-content" className="flex min-h-screen items-center justify-center bg-bg px-4">
+          <div className="max-w-[420px] rounded-[8px] border border-border bg-surface p-6 text-center">
+            <h1 className="text-[24px] font-semibold text-text">Нужен вход</h1>
+            <p className="mt-2 text-[14px] leading-6 text-text2">
+              Создавать лоты могут только авторизованные пользователи.
             </p>
+            <Link
+              href="/login"
+              className="mt-5 inline-flex rounded-[7px] bg-gold px-4 py-2.5 text-[14px] font-medium text-white hover:bg-gold-hover"
+            >
+              Войти
+            </Link>
           </div>
         </main>
       </>
@@ -53,19 +60,20 @@ export default function CreateLotPage() {
     e.preventDefault();
     setServerError("");
 
-    const newErrors: Record<string, string> = {};
-    const titleErr = validateLotTitle(title);
-    const descErr = validateLotDescription(description);
-    const priceErr = validateStartingPrice(startingPrice);
-    if (titleErr) newErrors.title = titleErr;
-    if (descErr) newErrors.description = descErr;
-    if (priceErr) newErrors.startingPrice = priceErr;
+    const nextErrors: Record<string, string> = {};
+    const titleError = validateLotTitle(title);
+    const descriptionError = validateLotDescription(description);
+    const priceError = validateStartingPrice(startingPrice);
+
+    if (titleError) nextErrors.title = titleError;
+    if (descriptionError) nextErrors.description = descriptionError;
+    if (priceError) nextErrors.startingPrice = priceError;
     if (supportedDeliveryProviders.length === 0) {
-      newErrors.supportedDeliveryProviders = "Выберите хотя бы одну службу доставки";
+      nextErrors.supportedDeliveryProviders = "Выберите хотя бы одну службу доставки";
     }
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
       return;
     }
 
@@ -84,14 +92,10 @@ export default function CreateLotPage() {
     } catch (err: unknown) {
       if (err instanceof Error && "response" in err) {
         const axiosErr = err as { response?: { data?: { errors?: Record<string, string[]> } } };
-        const errs = axiosErr.response?.data?.errors;
-        if (errs) {
-          setServerError(Object.values(errs).flat().join(", "));
-        } else {
-          setServerError("Ошибка создания лота");
-        }
+        const responseErrors = axiosErr.response?.data?.errors;
+        setServerError(responseErrors ? Object.values(responseErrors).flat().join(", ") : "Не удалось создать лот");
       } else {
-        setServerError("Ошибка создания лота");
+        setServerError("Не удалось создать лот");
       }
     } finally {
       setIsLoading(false);
@@ -99,13 +103,11 @@ export default function CreateLotPage() {
   };
 
   const fieldClass = (field: string) =>
-    `w-full px-3 py-2.5 text-[14px] bg-bg2 border rounded-[7px] text-text placeholder:text-text3 outline-none transition-colors font-ui ${errors[field] ? "border-danger" : "border-border focus:border-gold"}`;
+    `w-full rounded-[7px] border bg-bg2 px-3 py-2.5 text-[14px] text-text outline-none transition-colors placeholder:text-text3 ${errors[field] ? "border-danger" : "border-border focus:border-gold"}`;
 
   const toggleDeliveryProvider = (provider: string) => {
     setSupportedDeliveryProviders((prev) =>
-      prev.includes(provider)
-        ? prev.filter((item) => item !== provider)
-        : [...prev, provider]
+      prev.includes(provider) ? prev.filter((item) => item !== provider) : [...prev, provider],
     );
     setErrors((prev) => ({ ...prev, supportedDeliveryProviders: "" }));
   };
@@ -118,107 +120,119 @@ export default function CreateLotPage() {
   return (
     <>
       <Header />
-      <main className="bg-bg min-h-screen">
-        <div className="max-w-[640px] mx-auto px-4 sm:px-8 py-10">
-          <h1 className="font-heading text-[28px] font-semibold text-text mb-6">
-            Создать лот
-          </h1>
+      <main id="main-content" className="min-h-screen bg-bg">
+        <div className="mx-auto grid max-w-[1120px] gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <section className="rounded-[8px] border border-border bg-surface p-5 sm:p-6">
+            <div className="mb-6">
+              <p className="text-[13px] font-medium text-gold">Новый лот</p>
+              <h1 className="mt-1 text-[28px] font-semibold text-text">Создать черновик</h1>
+              <p className="mt-2 max-w-[720px] text-[14px] leading-6 text-text2">
+                После создания лот попадёт в черновики. Его можно отредактировать и отправить на модерацию.
+              </p>
+            </div>
 
-          <div className="bg-surface border border-border rounded-[10px] p-8">
             <form onSubmit={handleSubmit} className="space-y-5" noValidate>
               {serverError && (
-                <div className="text-[13px] text-danger bg-danger-bg border border-danger/20 rounded-[7px] px-4 py-2.5">
+                <div
+                  className="rounded-[7px] border border-danger/20 bg-danger-bg px-4 py-2.5 text-[13px] text-danger"
+                  role="alert"
+                >
                   {serverError}
                 </div>
               )}
 
               <div>
-                <label htmlFor="title" className="block text-[13px] font-medium text-text2 mb-1.5">
+                <label htmlFor="title" className="mb-1.5 block text-[13px] font-medium text-text2">
                   Название
                 </label>
                 <input
                   id="title"
                   type="text"
                   value={title}
-                  onChange={(e) => { setTitle(e.target.value); setErrors(prev => ({ ...prev, title: "" })); }}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    setErrors((prev) => ({ ...prev, title: "" }));
+                  }}
                   className={fieldClass("title")}
-                  placeholder="Название лота"
+                  placeholder="Например: Плёночная камера Olympus"
                 />
-                {errors.title && <p className="text-[12px] text-danger mt-1">{errors.title}</p>}
+                {errors.title && <p className="mt-1 text-[12px] text-danger">{errors.title}</p>}
               </div>
 
               <div>
-                <label htmlFor="description" className="block text-[13px] font-medium text-text2 mb-1.5">
+                <label htmlFor="description" className="mb-1.5 block text-[13px] font-medium text-text2">
                   Описание
                 </label>
                 <textarea
                   id="description"
                   value={description}
-                  onChange={(e) => { setDescription(e.target.value); setErrors(prev => ({ ...prev, description: "" })); }}
-                  rows={4}
+                  onChange={(e) => {
+                    setDescription(e.target.value);
+                    setErrors((prev) => ({ ...prev, description: "" }));
+                  }}
+                  rows={5}
                   className={fieldClass("description")}
-                  placeholder="Описание лота"
+                  placeholder="Состояние, комплект, дефекты, город отправки"
                 />
-                {errors.description && <p className="text-[12px] text-danger mt-1">{errors.description}</p>}
+                {errors.description && <p className="mt-1 text-[12px] text-danger">{errors.description}</p>}
               </div>
 
-              <div>
-                <label htmlFor="startingPrice" className="block text-[13px] font-medium text-text2 mb-1.5">
-                  Стартовая цена (₽)
-                </label>
-                <input
-                  id="startingPrice"
-                  type="number"
-                  value={startingPrice}
-                  onChange={(e) => { setStartingPrice(e.target.value); setErrors(prev => ({ ...prev, startingPrice: "" })); }}
-                  className={fieldClass("startingPrice")}
-                  placeholder="1000"
-                />
-                {errors.startingPrice && <p className="text-[12px] text-danger mt-1">{errors.startingPrice}</p>}
-                {hasPayoutPreview && (
-                  <div className="mt-2 rounded-[7px] border border-border bg-bg2 px-3 py-2 text-[12px] text-text2">
-                    <div>Комиссия сервиса 1%: ₽ {formatPrice(serviceFee)}</div>
-                    <div className="mt-0.5 text-text font-medium">
-                      С учетом комиссии вы получите ₽ {formatPrice(sellerPayout)}
-                    </div>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="startingPrice" className="mb-1.5 block text-[13px] font-medium text-text2">
+                    Стартовая цена
+                  </label>
+                  <input
+                    id="startingPrice"
+                    type="number"
+                    value={startingPrice}
+                    onChange={(e) => {
+                      setStartingPrice(e.target.value);
+                      setErrors((prev) => ({ ...prev, startingPrice: "" }));
+                    }}
+                    className={fieldClass("startingPrice")}
+                    placeholder="1000"
+                    min={1}
+                    inputMode="decimal"
+                  />
+                  {errors.startingPrice && <p className="mt-1 text-[12px] text-danger">{errors.startingPrice}</p>}
+                </div>
+
+                <div>
+                  <span className="mb-1.5 block text-[13px] font-medium text-text2">
+                    Длительность
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {DURATION_PRESETS.map((preset) => (
+                      <button
+                        key={preset.hours}
+                        type="button"
+                        onClick={() => setDurationHours(preset.hours)}
+                        className={`rounded-[7px] border px-3 py-2.5 text-[13px] font-medium transition-colors ${
+                          durationHours === preset.hours
+                            ? "border-gold bg-gold text-white"
+                            : "border-border bg-bg2 text-text2 hover:border-gold"
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
                   </div>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-[13px] font-medium text-text2 mb-2">
-                  Длительность аукциона
-                </label>
-                <div className="grid grid-cols-4 gap-2">
-                  {DURATION_PRESETS.map((preset) => (
-                    <button
-                      key={preset.hours}
-                      type="button"
-                      onClick={() => setDurationHours(preset.hours)}
-                      className={`py-2.5 rounded-[7px] text-[13px] font-medium transition-colors font-ui border ${
-                        durationHours === preset.hours
-                          ? "bg-gold text-[#FFF8E8] border-gold"
-                          : "bg-bg2 text-text2 border-border hover:border-gold"
-                      }`}
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
                 </div>
               </div>
 
               <div>
-                <label className="block text-[13px] font-medium text-text2 mb-2">
+                <span className="mb-2 block text-[13px] font-medium text-text2">
                   Службы доставки
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                </span>
+                <div className="grid gap-2 sm:grid-cols-3">
                   {DELIVERY_PROVIDERS.map((provider) => (
                     <label
                       key={provider.value}
-                      className={`flex items-center gap-2 px-3 py-2.5 rounded-[7px] border text-[13px] font-ui cursor-pointer transition-colors ${
+                      className={`flex cursor-pointer items-center gap-2 rounded-[7px] border px-3 py-2.5 text-[13px] transition-colors ${
                         supportedDeliveryProviders.includes(provider.value)
-                          ? "bg-gold-light text-text border-gold"
-                          : "bg-bg2 text-text2 border-border hover:border-gold"
+                          ? "border-gold bg-gold-light text-text"
+                          : "border-border bg-bg2 text-text2 hover:border-gold"
                       }`}
                     >
                       <input
@@ -232,19 +246,41 @@ export default function CreateLotPage() {
                   ))}
                 </div>
                 {errors.supportedDeliveryProviders && (
-                  <p className="text-[12px] text-danger mt-1">{errors.supportedDeliveryProviders}</p>
+                  <p className="mt-1 text-[12px] text-danger">{errors.supportedDeliveryProviders}</p>
                 )}
               </div>
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-2.5 rounded-[7px] border-none bg-gold text-[#FFF8E8] text-[14px] font-medium cursor-pointer font-ui hover:bg-gold-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full rounded-[7px] bg-gold py-2.5 text-[14px] font-medium text-white transition-colors hover:bg-gold-hover disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:px-6"
               >
-                {isLoading ? "Создание..." : "Создать лот"}
+                {isLoading ? "Создаём..." : "Создать черновик"}
               </button>
             </form>
-          </div>
+          </section>
+
+          <aside className="h-fit rounded-[8px] border border-border bg-surface p-5">
+            <h2 className="text-[17px] font-semibold text-text">Предварительный расчёт</h2>
+            <div className="mt-4 space-y-3 text-[13px]">
+              <div className="flex justify-between gap-4 border-b border-border pb-3 text-text2">
+                <span>Цена лота</span>
+                <span className="font-medium text-text">
+                  {hasPayoutPreview ? `${formatPrice(startingPriceNumber)} ₽` : "не указана"}
+                </span>
+              </div>
+              <div className="flex justify-between gap-4 border-b border-border pb-3 text-text2">
+                <span>Комиссия AuHub 1%</span>
+                <span className="font-medium text-text">{hasPayoutPreview ? `${formatPrice(serviceFee)} ₽` : "0 ₽"}</span>
+              </div>
+              <div className="rounded-[7px] bg-gold-light p-3">
+                <div className="text-[12px] text-text2">С учётом комиссии вы получите</div>
+                <div className="mt-1 text-[22px] font-semibold text-text">
+                  {hasPayoutPreview ? `${formatPrice(sellerPayout)} ₽` : "0 ₽"}
+                </div>
+              </div>
+            </div>
+          </aside>
         </div>
       </main>
     </>

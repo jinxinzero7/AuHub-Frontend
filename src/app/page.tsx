@@ -56,7 +56,7 @@ export default async function HomePage({
     <>
       <Header />
 
-      <main className="bg-bg min-h-screen">
+      <main id="main-content" className="bg-bg min-h-screen">
         {!searchQuery && (
           <section className="border-b border-border bg-surface">
             <div className="max-w-[1120px] mx-auto px-4 sm:px-6 pt-10 pb-8">

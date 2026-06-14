@@ -23,7 +23,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return (
       <>
         <Header />
-        <main className="bg-bg min-h-screen flex items-center justify-center">
+        <main id="main-content" className="bg-bg min-h-screen flex items-center justify-center">
           <div className="text-center">
             <h1 className="font-heading text-[28px] text-text mb-2">Доступ запрещён</h1>
             <p className="text-text2 text-[14px] font-light">Только администраторы</p>
@@ -36,7 +36,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <>
       <Header />
-      <main className="bg-bg min-h-screen">
+      <main id="main-content" className="bg-bg min-h-screen">
         <div className="max-w-[960px] mx-auto px-4 sm:px-8 py-10 flex flex-col sm:flex-row gap-8">
           <nav className="w-full sm:w-[180px] shrink-0">
             <div className="flex sm:block gap-2 sm:space-y-1 sm:sticky sm:top-[74px] overflow-x-auto">

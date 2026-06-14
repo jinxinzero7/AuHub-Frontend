@@ -89,7 +89,7 @@ export default function NotificationsPage() {
     return (
       <>
         <Header />
-        <main className="bg-bg min-h-screen flex items-center justify-center">
+        <main id="main-content" className="bg-bg min-h-screen flex items-center justify-center">
           <p className="text-text2 text-[14px]">Войдите, чтобы просматривать уведомления</p>
         </main>
       </>
@@ -99,7 +99,7 @@ export default function NotificationsPage() {
   return (
     <>
       <Header />
-      <main className="bg-bg min-h-screen">
+      <main id="main-content" className="bg-bg min-h-screen">
         <div className="max-w-[640px] mx-auto px-4 sm:px-8 py-10">
           <div className="flex items-center justify-between mb-6">
             <h1 className="font-heading text-[28px] font-semibold text-text">Уведомления</h1>

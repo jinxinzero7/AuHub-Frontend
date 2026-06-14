@@ -123,7 +123,7 @@ export default function EditLotPage() {
     return (
       <>
         <Header />
-        <main className="bg-bg min-h-screen flex items-center justify-center">
+        <main id="main-content" className="bg-bg min-h-screen flex items-center justify-center">
           <div className="text-center">
             <h1 className="font-heading text-[28px] text-text mb-2">Доступ запрещён</h1>
             <p className="text-text2 text-[14px] font-light">Войдите, чтобы редактировать лот</p>
@@ -137,7 +137,7 @@ export default function EditLotPage() {
     return (
       <>
         <Header />
-        <main className="bg-bg min-h-screen flex items-center justify-center">
+        <main id="main-content" className="bg-bg min-h-screen flex items-center justify-center">
           <div className="text-text3 text-[14px]">Загрузка...</div>
         </main>
       </>
@@ -148,7 +148,7 @@ export default function EditLotPage() {
     return (
       <>
         <Header />
-        <main className="bg-bg min-h-screen flex items-center justify-center">
+        <main id="main-content" className="bg-bg min-h-screen flex items-center justify-center">
           <div className="text-center max-w-[420px] px-4">
             <h1 className="font-heading text-[28px] text-text mb-2">Редактирование недоступно</h1>
             <p className="text-text2 text-[14px] font-light">
@@ -163,7 +163,7 @@ export default function EditLotPage() {
   return (
     <>
       <Header />
-      <main className="bg-bg min-h-screen">
+      <main id="main-content" className="bg-bg min-h-screen">
         <div className="max-w-[640px] mx-auto px-4 sm:px-8 py-10">
           <h1 className="font-heading text-[28px] font-semibold text-text mb-2">Редактировать лот</h1>
           <p className="text-[13px] text-text2 mb-6">

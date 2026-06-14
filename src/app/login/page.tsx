@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 import { validateEmailOrPhone } from "@/lib/validation";
 
 export default function LoginPage() {
@@ -17,13 +17,13 @@ export default function LoginPage() {
     e.preventDefault();
     setServerError("");
 
-    const newErrors: Record<string, string> = {};
-    const identifierErr = validateEmailOrPhone(identifier);
-    if (identifierErr) newErrors.identifier = identifierErr;
-    if (!password) newErrors.password = "Пароль обязателен";
+    const nextErrors: Record<string, string> = {};
+    const identifierError = validateEmailOrPhone(identifier);
+    if (identifierError) nextErrors.identifier = identifierError;
+    if (!password) nextErrors.password = "Пароль обязателен";
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
       return;
     }
 
@@ -35,83 +35,101 @@ export default function LoginPage() {
     } catch (err: unknown) {
       if (err instanceof Error && "response" in err) {
         const axiosErr = err as { response?: { data?: { errors?: { generalErrors?: string[] } } } };
-        setServerError(axiosErr.response?.data?.errors?.generalErrors?.[0] || "Неверный email/телефон или пароль");
+        setServerError(axiosErr.response?.data?.errors?.generalErrors?.[0] || "Неверный email, телефон или пароль");
       } else {
-        setServerError("Неверный email/телефон или пароль");
+        setServerError("Неверный email, телефон или пароль");
       }
     } finally {
       setIsLoading(false);
     }
   };
 
+  const fieldClass = (field: string) =>
+    `w-full rounded-[7px] border bg-bg2 px-3 py-2.5 text-[14px] text-text outline-none transition-colors placeholder:text-text3 ${errors[field] ? "border-danger" : "border-border focus:border-gold"}`;
+
   return (
-    <div className="min-h-[calc(100vh-58px)] flex items-center justify-center px-4 py-12 bg-bg">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link href="/" className="font-heading text-[28px] font-semibold tracking-[-0.5px]">
-            <span className="text-gold">Au</span>
-            <span className="text-text">Hub</span>
-          </Link>
-          <p className="text-text2 mt-2 text-[14px] font-light">Войдите в свой аккаунт</p>
-        </div>
-
-        <div className="bg-surface border border-border rounded-[10px] p-8">
-          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-            {serverError && (
-              <div className="text-[13px] text-danger bg-danger-bg border border-danger/20 rounded-[7px] px-4 py-2.5">
-                {serverError}
-              </div>
-            )}
-
-            <div>
-              <label htmlFor="identifier" className="block text-[13px] font-medium text-text2 mb-1.5">
-                Email или телефон
-              </label>
-              <input
-                id="identifier"
-                type="text"
-                value={identifier}
-                onChange={(e) => { setIdentifier(e.target.value); setErrors((prev) => ({ ...prev, identifier: "" })); }}
-                className={`w-full px-3 py-2.5 text-[14px] bg-bg2 border rounded-[7px] text-text placeholder:text-text3 outline-none transition-colors font-ui ${errors.identifier ? "border-danger" : "border-border focus:border-gold"}`}
-                placeholder="your@email.com или +79990000000"
-                autoComplete="username"
-              />
-              {errors.identifier && <p className="text-[12px] text-danger mt-1">{errors.identifier}</p>}
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-[13px] font-medium text-text2 mb-1.5">
-                Пароль
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => { setPassword(e.target.value); setErrors((prev) => ({ ...prev, password: "" })); }}
-                className={`w-full px-3 py-2.5 text-[14px] bg-bg2 border rounded-[7px] text-text placeholder:text-text3 outline-none transition-colors font-ui ${errors.password ? "border-danger" : "border-border focus:border-gold"}`}
-                placeholder="Введите пароль"
-                autoComplete="current-password"
-              />
-              {errors.password && <p className="text-[12px] text-danger mt-1">{errors.password}</p>}
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-2.5 rounded-[7px] border-none bg-gold text-[#FFF8E8] text-[14px] font-medium cursor-pointer font-ui hover:bg-gold-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? "Вход..." : "Войти"}
-            </button>
-          </form>
-
-          <div className="mt-6 text-center text-[13px] text-text2">
-            Нет аккаунта?{" "}
-            <Link href="/register" className="text-gold hover:text-gold-hover transition-colors">
-              Зарегистрироваться
+    <main id="main-content" className="min-h-screen bg-bg px-4 py-10">
+      <div className="mx-auto flex min-h-[calc(100vh-80px)] w-full max-w-[920px] items-center justify-center">
+        <div className="grid w-full overflow-hidden rounded-[8px] border border-border bg-surface shadow-sm md:grid-cols-[0.95fr_1.05fr]">
+          <section className="border-b border-border bg-surface2 p-6 md:border-b-0 md:border-r md:p-8">
+            <Link href="/" className="text-[26px] font-semibold text-text">
+              <span className="text-gold">Au</span>Hub
             </Link>
-          </div>
+            <h1 className="mt-8 text-[28px] font-semibold leading-tight text-text">
+              Вход в аккаунт
+            </h1>
+            <p className="mt-3 text-[14px] leading-6 text-text2">
+              Используйте email или телефон. После входа доступны ставки, баланс, выигрыши и управление лотами.
+            </p>
+          </section>
+
+          <section className="p-6 md:p-8">
+            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+              {serverError && (
+                <div
+                  className="rounded-[7px] border border-danger/20 bg-danger-bg px-4 py-2.5 text-[13px] text-danger"
+                  role="alert"
+                >
+                  {serverError}
+                </div>
+              )}
+
+              <div>
+                <label htmlFor="identifier" className="mb-1.5 block text-[13px] font-medium text-text2">
+                  Email или телефон
+                </label>
+                <input
+                  id="identifier"
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => {
+                    setIdentifier(e.target.value);
+                    setErrors((prev) => ({ ...prev, identifier: "" }));
+                  }}
+                  className={fieldClass("identifier")}
+                  placeholder="your@email.com или +79990000000"
+                  autoComplete="username"
+                />
+                {errors.identifier && <p className="text-danger mt-1 text-[12px]">{errors.identifier}</p>}
+              </div>
+
+              <div>
+                <label htmlFor="password" className="mb-1.5 block text-[13px] font-medium text-text2">
+                  Пароль
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setErrors((prev) => ({ ...prev, password: "" }));
+                  }}
+                  className={fieldClass("password")}
+                  placeholder="Введите пароль"
+                  autoComplete="current-password"
+                />
+                {errors.password && <p className="text-danger mt-1 text-[12px]">{errors.password}</p>}
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full rounded-[7px] bg-gold py-2.5 text-[14px] font-medium text-white transition-colors hover:bg-gold-hover disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isLoading ? "Входим..." : "Войти"}
+              </button>
+            </form>
+
+            <p className="mt-6 text-center text-[13px] text-text2">
+              Нет аккаунта?{" "}
+              <Link href="/register" className="font-medium text-gold transition-colors hover:text-gold-hover">
+                Зарегистрироваться
+              </Link>
+            </p>
+          </section>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

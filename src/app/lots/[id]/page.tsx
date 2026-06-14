@@ -86,7 +86,7 @@ export default async function LotDetailPage({
     return (
       <>
         <Header />
-        <main className="bg-bg min-h-screen flex items-center justify-center">
+        <main id="main-content" className="bg-bg min-h-screen flex items-center justify-center">
           <div className="text-center">
             <h1 className="font-heading text-[28px] text-text mb-2">Лот не найден</h1>
             <Link href="/" className="text-gold hover:text-gold-hover transition-colors">
@@ -101,7 +101,7 @@ export default async function LotDetailPage({
   return (
     <>
       <Header />
-      <main className="bg-bg min-h-screen">
+      <main id="main-content" className="bg-bg min-h-screen">
         <div className="max-w-[960px] mx-auto px-4 sm:px-8 py-10">
           <LotDetailClient
             lotId={lot.id}

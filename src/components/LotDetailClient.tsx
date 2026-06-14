@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Star } from "lucide-react";
@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSignalR } from "@/hooks/useSignalR";
 import BidForm from "@/components/BidForm";
 import ImageUpload from "@/components/ImageUpload";
-import { calculateSellerPayout, calculateServiceFee, formatPrice, formatDate } from "@/lib/utils";
+import { calculateSellerPayout, calculateServiceFee, formatDate, formatPrice } from "@/lib/utils";
 import api from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/constants";
 import type { Bid, PublicUserProfileResponse, SellerReviewsResponse, SellerTrustScoreResponse } from "@/types";
@@ -40,6 +40,46 @@ interface LotDetailClientProps {
   supportedDeliveryProviders: string[];
   initialBids: Bid[];
   initialImages: LotImage[];
+}
+
+const deliveryProviderLabels: Record<string, string> = {
+  Cdek: "СДЭК",
+  YandexDelivery: "Яндекс Доставка",
+  RussianPost: "Почта России",
+};
+
+const lotStatusLabels: Record<string, string> = {
+  Draft: "Черновик",
+  PendingModeration: "На модерации",
+  Active: "Активен",
+  Rejected: "Отклонён",
+  Cancelled: "Отменён",
+  Completed: "Завершён",
+  CompletedNoWinner: "Без победителя",
+  DeliveryRequestPending: "Ожидает доставку",
+  ShippingPending: "Ожидает отправку",
+  Shipped: "Отправлен",
+  Delivered: "Доставлен",
+  TransactionComplete: "Сделка завершена",
+  Disputed: "Спор",
+};
+
+function getStatusLabel(status: string) {
+  return lotStatusLabels[status] ?? status;
+}
+
+function statusClassName(status: string) {
+  if (status === "Active") return "border-green-200 bg-green-50 text-green-700";
+  if (status === "PendingModeration" || status === "ShippingPending" || status === "DeliveryRequestPending") {
+    return "border-yellow-200 bg-yellow-50 text-yellow-700";
+  }
+  if (status === "Rejected" || status === "Disputed" || status === "Cancelled") {
+    return "border-danger/20 bg-danger-bg text-danger";
+  }
+  if (status === "TransactionComplete" || status === "Delivered") {
+    return "border-blue-200 bg-blue-50 text-blue-700";
+  }
+  return "border-border bg-bg2 text-text2";
 }
 
 export default function LotDetailClient({
@@ -96,12 +136,12 @@ export default function LotDetailClient({
       },
       ...prev,
     ]);
-    setNewBidNotification(`Новая ставка от ${message.bidderName}: ₽ ${formatPrice(message.currentPrice)}`);
+    setNewBidNotification(`Новая ставка от ${message.bidderName}: ${formatPrice(message.currentPrice)} ₽`);
     setTimeout(() => setNewBidNotification(null), 3000);
   }, []);
 
   const handleLotCompleted = useCallback(() => {
-    setNewBidNotification("Аукцион завершён!");
+    setNewBidNotification("Аукцион завершён");
     setTimeout(() => setNewBidNotification(null), 5000);
   }, []);
 
@@ -165,7 +205,7 @@ export default function LotDetailClient({
       window.location.reload();
     } catch (err) {
       console.error("Failed to submit lot for moderation:", err);
-      setNewBidNotification("Ошибка отправки лота на модерацию");
+      setNewBidNotification("Не удалось отправить лот на модерацию");
       setTimeout(() => setNewBidNotification(null), 3000);
     }
   }, [lotId]);
@@ -250,11 +290,6 @@ export default function LotDetailClient({
   }, [lotId, refreshSellerReviews, reviewComment, reviewRating]);
 
   const coverImage = images.length > 0 ? images[0].url : null;
-  const deliveryProviderLabels: Record<string, string> = {
-    Cdek: "СДЭК",
-    YandexDelivery: "Яндекс Доставка",
-    RussianPost: "Почта России",
-  };
   const isDeliveryDeadlineExpired = deliveryRequestDeadlineAt
     ? Date.parse(deliveryRequestDeadlineAt) < Date.parse(currentTime)
     : false;
@@ -267,357 +302,336 @@ export default function LotDetailClient({
   const canReviewSeller = sellerReviews !== null && user?.id === winnerId && status === "TransactionComplete" && !existingReview;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <div>
-        <div className="w-full aspect-[4/3] bg-bg2 border border-border rounded-[10px] overflow-hidden mb-4">
-          {coverImage ? (
-            <div className="relative w-full h-full">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <section className="space-y-5">
+        <div className="overflow-hidden rounded-[8px] border border-border bg-surface">
+          <div className="relative aspect-[4/3] w-full bg-bg2">
+            {coverImage ? (
               <Image
                 src={coverImage}
                 alt={title}
                 fill
-                sizes="(max-width: 768px) 100vw, 50vw"
+                sizes="(max-width: 1024px) 100vw, 720px"
                 className="object-cover"
                 priority
                 unoptimized
               />
-            </div>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <span className="text-text3 text-[14px] font-light">Изображение лота</span>
-            </div>
-          )}
-        </div>
-
-        {newBidNotification && (
-          <div className="mb-4 bg-gold/10 border border-gold/30 rounded-[8px] px-4 py-3 text-[13px] text-gold text-center animate-pulse">
-            {newBidNotification}
-          </div>
-        )}
-
-        <div className="bg-surface border border-border rounded-[10px] p-6">
-          <h1 className="font-heading text-[24px] font-semibold text-text mb-2">
-            {title}
-          </h1>
-          <p className="text-[14px] text-text2 font-light mb-4 leading-relaxed">
-            {description}
-          </p>
-
-          <div className="flex items-baseline gap-4 mb-4">
-            <div>
-              <div className="text-[10px] text-text2 font-light mb-0.5">Текущая ставка</div>
-              <div className="text-[28px] font-medium text-gold font-mono tracking-[-0.5px]">
-                ₽ {formatPrice(currentPrice)}
+            ) : (
+              <div className="flex h-full w-full items-center justify-center px-6 text-center text-[14px] text-text3">
+                Изображение лота появится после загрузки продавцом
               </div>
-            </div>
-            <div className="text-[12px] text-text3">
-              {bids.length} ставок
-            </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4 text-[13px]">
-            <div>
-              <span className="text-text2 font-light">Статус:</span>
-              <span className="ml-2 text-text font-medium">{status}</span>
-            </div>
-            <div>
-              <span className="text-text2 font-light">Стартовая цена:</span>
-              <span className="ml-2 text-text font-medium">₽ {formatPrice(startingPrice)}</span>
-            </div>
-            <div>
-              <span className="text-text2 font-light">Начало:</span>
-              <span className="ml-2 text-text font-medium">{formatDate(startTime)}</span>
-            </div>
-            <div>
-              <span className="text-text2 font-light">Окончание:</span>
-              <span className="ml-2 text-text font-medium">{formatDate(endTime)}</span>
-            </div>
-          </div>
-
-          {isSeller && (
-            <div className="mt-4 rounded-[8px] border border-border bg-bg2 px-4 py-3 text-[13px]">
-              <div className="flex items-center justify-between gap-3 text-text2">
-                <span>Комиссия сервиса 1%</span>
-                <span>₽ {formatPrice(serviceFee)}</span>
+          <div className="p-5 sm:p-6">
+            {newBidNotification && (
+              <div
+                className="mb-4 rounded-[7px] border border-gold-border bg-gold-light px-4 py-3 text-center text-[13px] font-medium text-gold"
+                aria-live="polite"
+              >
+                {newBidNotification}
               </div>
-              <div className="mt-1 flex items-center justify-between gap-3 text-text font-medium">
-                <span>Вы получите</span>
-                <span>₽ {formatPrice(sellerPayout)}</span>
-              </div>
-            </div>
-          )}
+            )}
 
-          {supportedDeliveryProviders.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-border">
-              <div className="text-[12px] text-text2 font-light mb-2">Доставка:</div>
-              <div className="flex flex-wrap gap-2">
-                {supportedDeliveryProviders.map((provider) => (
-                  <span key={provider} className="text-[12px] px-2 py-1 rounded-[6px] bg-bg2 text-text border border-border">
-                    {deliveryProviderLabels[provider] ?? provider}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="mt-4 pt-4 border-t border-border">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <div className="text-[12px] text-text2 font-light mb-1">Рейтинг продавца</div>
-                <div className="flex items-center gap-2 text-[14px] text-text">
-                  <Star className={`w-4 h-4 ${sellerReviews && sellerReviews.reviewsCount > 0 ? "fill-gold text-gold" : "text-text3"}`} />
-                  {sellerReviews && sellerReviews.reviewsCount > 0 ? (
-                    <span>{sellerReviews.averageRating.toFixed(1)} из 5</span>
-                  ) : (
-                    <span>Пока нет отзывов</span>
-                  )}
+                <span className={`inline-flex rounded-full border px-3 py-1 text-[12px] font-medium ${statusClassName(status)}`}>
+                  {getStatusLabel(status)}
+                </span>
+                <h1 className="mt-3 text-[28px] font-semibold leading-tight text-text">{title}</h1>
+              </div>
+              {canEditLot && (
+                <Link
+                  href={`/lots/${lotId}/edit`}
+                  className="inline-flex shrink-0 items-center justify-center rounded-[7px] border border-border bg-bg2 px-4 py-2 text-[13px] font-medium text-text transition-colors hover:border-gold"
+                >
+                  Редактировать
+                </Link>
+              )}
+            </div>
+
+            <p className="mt-4 whitespace-pre-wrap text-[14px] leading-6 text-text2">{description}</p>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-4">
+              <div className="rounded-[7px] bg-bg2 p-3 sm:col-span-2">
+                <div className="text-[12px] text-text2">Текущая цена</div>
+                <div className="mt-1 font-mono text-[28px] font-semibold text-gold">
+                  {formatPrice(currentPrice)} ₽
                 </div>
               </div>
-              <div className="text-[12px] text-text2">
-                {sellerReviews?.reviewsCount ?? 0} отзывов
+              <div className="rounded-[7px] bg-bg2 p-3">
+                <div className="text-[12px] text-text2">Ставок</div>
+                <div className="mt-1 text-[20px] font-semibold text-text">{bids.length}</div>
+              </div>
+              <div className="rounded-[7px] bg-bg2 p-3">
+                <div className="text-[12px] text-text2">Старт</div>
+                <div className="mt-1 text-[20px] font-semibold text-text">{formatPrice(startingPrice)} ₽</div>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-3 border-t border-border pt-5 text-[13px] sm:grid-cols-2">
+              <div>
+                <span className="text-text2">Начало: </span>
+                <span className="font-medium text-text">{formatDate(startTime)}</span>
+              </div>
+              <div>
+                <span className="text-text2">Окончание: </span>
+                <span className="font-medium text-text">{formatDate(endTime)}</span>
+              </div>
+            </div>
+
+            {supportedDeliveryProviders.length > 0 && (
+              <div className="mt-5 border-t border-border pt-5">
+                <div className="mb-2 text-[12px] font-medium text-text2">Доступная доставка</div>
+                <div className="flex flex-wrap gap-2">
+                  {supportedDeliveryProviders.map((provider) => (
+                    <span key={provider} className="rounded-full border border-border bg-bg2 px-3 py-1 text-[12px] text-text">
+                      {deliveryProviderLabels[provider] ?? provider}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {isSeller && (
+              <div className="mt-5 rounded-[7px] border border-border bg-bg2 p-4 text-[13px]">
+                <div className="flex items-center justify-between gap-3 text-text2">
+                  <span>Комиссия AuHub 1%</span>
+                  <span>{formatPrice(serviceFee)} ₽</span>
+                </div>
+                <div className="mt-1 flex items-center justify-between gap-3 font-medium text-text">
+                  <span>С учётом комиссии вы получите</span>
+                  <span>{formatPrice(sellerPayout)} ₽</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <section className="rounded-[8px] border border-border bg-surface p-5 sm:p-6">
+          <h2 className="text-[18px] font-semibold text-text">Продавец</h2>
+          <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="text-[14px] font-medium text-text">
+                {sellerProfile?.nickname ? `@${sellerProfile.nickname}` : "Профиль продавца"}
+              </div>
+              <div className="mt-1 flex items-center gap-2 text-[13px] text-text2">
+                <Star className={`h-4 w-4 ${sellerReviews && sellerReviews.reviewsCount > 0 ? "fill-gold text-gold" : "text-text3"}`} />
+                {sellerReviews && sellerReviews.reviewsCount > 0 ? (
+                  <span>{sellerReviews.averageRating.toFixed(1)} из 5, {sellerReviews.reviewsCount} отзывов</span>
+                ) : (
+                  <span>Пока нет отзывов</span>
+                )}
               </div>
             </div>
             {sellerProfile?.documentVerificationStatus === "Verified" && (
-              <div className="mt-3 inline-flex items-center rounded bg-green-50 border border-green-200 px-2 py-[4px] text-[12px] font-medium text-green-700">
-                Документы продавца подтверждены
-              </div>
-            )}
-            {sellerTrust && (
-              <div className="mt-3 rounded-[8px] border border-border bg-bg2 px-3 py-2">
-                <div className="flex items-center justify-between gap-3 text-[13px]">
-                  <span className="text-text2">Надёжность продавца</span>
-                  <span className="font-medium text-text">{sellerTrust.score}/100 · {sellerTrust.badge}</span>
-                </div>
-                <div className="mt-1 text-[11px] text-text3">
-                  Успешных сделок: {sellerTrust.successfulSales}, проигранных споров: {sellerTrust.sellerLostDisputes}
-                </div>
-              </div>
+              <span className="inline-flex rounded-full border border-green-200 bg-green-50 px-3 py-1 text-[12px] font-medium text-green-700">
+                Документы подтверждены
+              </span>
             )}
           </div>
-
-          {canRequestDelivery && (
-            <form onSubmit={handleRequestDelivery} className="mt-5 pt-5 border-t border-border space-y-3">
+          {sellerTrust && (
+            <div className="mt-4 rounded-[7px] border border-border bg-bg2 p-3 text-[13px]">
               <div className="flex items-center justify-between gap-3">
-                <h2 className="font-heading text-[16px] font-medium text-text">Запросить доставку</h2>
-                {deliveryRequestDeadlineAt && (
-                  <span className="text-[11px] text-text3">
-                    до {formatDate(deliveryRequestDeadlineAt)}
-                  </span>
-                )}
+                <span className="text-text2">Надёжность продавца</span>
+                <span className="font-medium text-text">{sellerTrust.score}/100 · {sellerTrust.badge}</span>
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <label className="block">
-                  <span className="block text-[12px] text-text2 mb-1">Служба доставки</span>
-                  <select
-                    value={deliveryProvider}
-                    onChange={(event) => setDeliveryProvider(event.target.value)}
-                    className="w-full bg-bg2 border border-border rounded-[7px] px-3 py-2 text-[13px] text-text outline-none focus:border-gold"
-                  >
-                    {supportedDeliveryProviders.map((provider) => (
-                      <option key={provider} value={provider}>
-                        {deliveryProviderLabels[provider] ?? provider}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="block">
-                  <span className="block text-[12px] text-text2 mb-1">Телефон получателя</span>
-                  <input
-                    value={recipientPhone}
-                    onChange={(event) => setRecipientPhone(event.target.value)}
-                    className="w-full bg-bg2 border border-border rounded-[7px] px-3 py-2 text-[13px] text-text outline-none focus:border-gold"
-                    placeholder="+7..."
-                  />
-                </label>
+              <div className="mt-1 text-[12px] text-text3">
+                Успешных сделок: {sellerTrust.successfulSales}, проигранных споров: {sellerTrust.sellerLostDisputes}
               </div>
-
-              <label className="block">
-                <span className="block text-[12px] text-text2 mb-1">Получатель</span>
-                <input
-                  value={recipientName}
-                  onChange={(event) => setRecipientName(event.target.value)}
-                  className="w-full bg-bg2 border border-border rounded-[7px] px-3 py-2 text-[13px] text-text outline-none focus:border-gold"
-                />
-              </label>
-
-              <label className="block">
-                <span className="block text-[12px] text-text2 mb-1">ПВЗ или адрес</span>
-                <textarea
-                  value={deliveryAddress}
-                  onChange={(event) => setDeliveryAddress(event.target.value)}
-                  rows={3}
-                  className="w-full bg-bg2 border border-border rounded-[7px] px-3 py-2 text-[13px] text-text outline-none focus:border-gold resize-none"
-                />
-              </label>
-
-              {deliveryError && (
-                <div className="text-[12px] text-danger">{deliveryError}</div>
-              )}
-
-              <button
-                type="submit"
-                disabled={isRequestingDelivery}
-                className="w-full bg-gold hover:bg-gold-hover disabled:opacity-60 disabled:cursor-not-allowed text-bg font-medium py-3 rounded-[8px] transition-colors"
-              >
-                {isRequestingDelivery ? "Отправка..." : "Запросить доставку"}
-              </button>
-            </form>
+            </div>
           )}
+        </section>
 
-          {canShipLot && (
-            <form onSubmit={handleShipLot} className="mt-5 pt-5 border-t border-border space-y-3">
+        {canRequestDelivery && (
+          <form onSubmit={handleRequestDelivery} className="rounded-[8px] border border-border bg-surface p-5 sm:p-6">
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h2 className="font-heading text-[16px] font-medium text-text">Отправить лот</h2>
-                <p className="text-[12px] text-text2 mt-1">
-                  Покупатель запросил доставку
-                  {selectedDeliveryProvider ? ` через ${deliveryProviderLabels[selectedDeliveryProvider] ?? selectedDeliveryProvider}` : ""}.
+                <h2 className="text-[18px] font-semibold text-text">Запросить доставку</h2>
+                <p className="mt-1 text-[13px] text-text2">
+                  Укажите удобный ПВЗ или адрес из доступных продавцу служб.
                 </p>
               </div>
+              {deliveryRequestDeadlineAt && (
+                <span className="text-[12px] text-text3">до {formatDate(deliveryRequestDeadlineAt)}</span>
+              )}
+            </div>
 
+            <div className="grid gap-3 sm:grid-cols-2">
               <label className="block">
-                <span className="block text-[12px] text-text2 mb-1">Трек-номер или номер отправления</span>
-                <input
-                  value={shippingTrackingNumber}
-                  onChange={(event) => setShippingTrackingNumber(event.target.value)}
-                  className="w-full bg-bg2 border border-border rounded-[7px] px-3 py-2 text-[13px] text-text outline-none focus:border-gold"
-                />
+                <span className="mb-1 block text-[12px] font-medium text-text2">Служба доставки</span>
+                <select
+                  value={deliveryProvider}
+                  onChange={(event) => setDeliveryProvider(event.target.value)}
+                  className="w-full rounded-[7px] border border-border bg-bg2 px-3 py-2 text-[13px] text-text outline-none focus:border-gold"
+                >
+                  {supportedDeliveryProviders.map((provider) => (
+                    <option key={provider} value={provider}>
+                      {deliveryProviderLabels[provider] ?? provider}
+                    </option>
+                  ))}
+                </select>
               </label>
 
-              {shippingError && (
-                <div className="text-[12px] text-danger">{shippingError}</div>
-              )}
-
-              <button
-                type="submit"
-                disabled={isShipping}
-                className="w-full bg-gold hover:bg-gold-hover disabled:opacity-60 disabled:cursor-not-allowed text-bg font-medium py-3 rounded-[8px] transition-colors"
-              >
-                {isShipping ? "Отправка..." : "Отметить как отправленный"}
-              </button>
-            </form>
-          )}
-
-          {status === "Shipped" && trackingNumber && (
-            <div className="mt-5 pt-5 border-t border-border">
-              <div className="text-[12px] text-text2 font-light mb-1">Отправление:</div>
-              <div className="text-[13px] text-text font-medium">{trackingNumber}</div>
+              <label className="block">
+                <span className="mb-1 block text-[12px] font-medium text-text2">Телефон получателя</span>
+                <input
+                  value={recipientPhone}
+                  onChange={(event) => setRecipientPhone(event.target.value)}
+                  className="w-full rounded-[7px] border border-border bg-bg2 px-3 py-2 text-[13px] text-text outline-none focus:border-gold"
+                  placeholder="+7..."
+                />
+              </label>
             </div>
-          )}
 
-          {existingReview && (
-            <div className="mt-5 pt-5 border-t border-border">
-              <div className="text-[12px] text-text2 font-light mb-1">Отзыв по сделке</div>
-              <div className="flex items-center gap-1 text-gold mb-2">
-                {Array.from({ length: existingReview.rating }).map((_, index) => (
-                  <Star key={index} className="w-4 h-4 fill-gold" />
-                ))}
-              </div>
-              {existingReview.comment && (
-                <p className="text-[13px] text-text2 leading-relaxed">{existingReview.comment}</p>
-              )}
-            </div>
-          )}
-
-          {canReviewSeller && (
-            <form onSubmit={handleCreateReview} className="mt-5 pt-5 border-t border-border space-y-3">
-              <h2 className="font-heading text-[16px] font-medium text-text">Оставить отзыв продавцу</h2>
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((rating) => (
-                  <button
-                    key={rating}
-                    type="button"
-                    onClick={() => setReviewRating(rating)}
-                    className="w-8 h-8 rounded-[6px] border border-border bg-bg2 flex items-center justify-center hover:border-gold transition-colors"
-                    aria-label={`${rating} из 5`}
-                  >
-                    <Star className={`w-4 h-4 ${rating <= reviewRating ? "fill-gold text-gold" : "text-text3"}`} />
-                  </button>
-                ))}
-              </div>
-              <textarea
-                value={reviewComment}
-                onChange={(event) => setReviewComment(event.target.value)}
-                rows={3}
-                maxLength={1000}
-                className="w-full bg-bg2 border border-border rounded-[7px] px-3 py-2 text-[13px] text-text outline-none focus:border-gold resize-none"
-                placeholder="Опишите, как прошла сделка"
+            <label className="mt-3 block">
+              <span className="mb-1 block text-[12px] font-medium text-text2">Получатель</span>
+              <input
+                value={recipientName}
+                onChange={(event) => setRecipientName(event.target.value)}
+                className="w-full rounded-[7px] border border-border bg-bg2 px-3 py-2 text-[13px] text-text outline-none focus:border-gold"
               />
-              {reviewError && (
-                <div className="text-[12px] text-danger">{reviewError}</div>
-              )}
-              <button
-                type="submit"
-                disabled={isSubmittingReview}
-                className="w-full bg-gold hover:bg-gold-hover disabled:opacity-60 disabled:cursor-not-allowed text-bg font-medium py-3 rounded-[8px] transition-colors"
-              >
-                {isSubmittingReview ? "Отправка..." : "Отправить отзыв"}
-              </button>
-            </form>
-          )}
+            </label>
 
-          {isSeller && status === "Draft" && (
+            <label className="mt-3 block">
+              <span className="mb-1 block text-[12px] font-medium text-text2">ПВЗ или адрес</span>
+              <textarea
+                value={deliveryAddress}
+                onChange={(event) => setDeliveryAddress(event.target.value)}
+                rows={3}
+                className="w-full resize-none rounded-[7px] border border-border bg-bg2 px-3 py-2 text-[13px] text-text outline-none focus:border-gold"
+              />
+            </label>
+
+            <div className="mt-3" aria-live="polite">
+              {deliveryError && <div className="text-[12px] text-danger">{deliveryError}</div>}
+            </div>
+
             <button
-              onClick={handleSubmitForModeration}
-              className="mt-4 w-full bg-gold hover:bg-gold-hover text-bg font-medium py-3 rounded-[8px] transition-colors"
+              type="submit"
+              disabled={isRequestingDelivery}
+              className="mt-4 w-full rounded-[7px] bg-gold py-2.5 text-[14px] font-medium text-white transition-colors hover:bg-gold-hover disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Отправить на модерацию
+              {isRequestingDelivery ? "Отправляем..." : "Запросить доставку"}
             </button>
-          )}
+          </form>
+        )}
 
-          {canEditLot && (
-            <Link
-              href={`/lots/${lotId}/edit`}
-              className="mt-3 block w-full text-center bg-bg2 hover:border-gold border border-border text-text font-medium py-3 rounded-[8px] transition-colors"
+        {canShipLot && (
+          <form onSubmit={handleShipLot} className="rounded-[8px] border border-border bg-surface p-5 sm:p-6">
+            <h2 className="text-[18px] font-semibold text-text">Отправить лот</h2>
+            <p className="mt-1 text-[13px] text-text2">
+              Покупатель запросил доставку
+              {selectedDeliveryProvider ? ` через ${deliveryProviderLabels[selectedDeliveryProvider] ?? selectedDeliveryProvider}` : ""}.
+            </p>
+
+            <label className="mt-4 block">
+              <span className="mb-1 block text-[12px] font-medium text-text2">Трек-номер или номер отправления</span>
+              <input
+                value={shippingTrackingNumber}
+                onChange={(event) => setShippingTrackingNumber(event.target.value)}
+                className="w-full rounded-[7px] border border-border bg-bg2 px-3 py-2 text-[13px] text-text outline-none focus:border-gold"
+              />
+            </label>
+
+            <div className="mt-3" aria-live="polite">
+              {shippingError && <div className="text-[12px] text-danger">{shippingError}</div>}
+            </div>
+
+            <button
+              type="submit"
+              disabled={isShipping}
+              className="mt-4 w-full rounded-[7px] bg-gold py-2.5 text-[14px] font-medium text-white transition-colors hover:bg-gold-hover disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Редактировать лот
-            </Link>
-          )}
-        </div>
+              {isShipping ? "Отправляем..." : "Отметить как отправленный"}
+            </button>
+          </form>
+        )}
+
+        {trackingNumber && status === "Shipped" && (
+          <section className="rounded-[8px] border border-border bg-surface p-5 sm:p-6">
+            <div className="text-[12px] font-medium text-text2">Отправление</div>
+            <div className="mt-1 text-[14px] font-medium text-text">{trackingNumber}</div>
+          </section>
+        )}
+
+        {existingReview && (
+          <section className="rounded-[8px] border border-border bg-surface p-5 sm:p-6">
+            <h2 className="text-[18px] font-semibold text-text">Отзыв по сделке</h2>
+            <div className="mt-3 flex items-center gap-1 text-gold">
+              {Array.from({ length: existingReview.rating }).map((_, index) => (
+                <Star key={index} className="h-4 w-4 fill-gold" />
+              ))}
+            </div>
+            {existingReview.comment && (
+              <p className="mt-3 text-[13px] leading-6 text-text2">{existingReview.comment}</p>
+            )}
+          </section>
+        )}
+
+        {canReviewSeller && (
+          <form onSubmit={handleCreateReview} className="rounded-[8px] border border-border bg-surface p-5 sm:p-6">
+            <h2 className="text-[18px] font-semibold text-text">Оставить отзыв продавцу</h2>
+            <div className="mt-4 flex gap-1">
+              {[1, 2, 3, 4, 5].map((rating) => (
+                <button
+                  key={rating}
+                  type="button"
+                  onClick={() => setReviewRating(rating)}
+                  className="flex h-8 w-8 items-center justify-center rounded-[6px] border border-border bg-bg2 transition-colors hover:border-gold"
+                  aria-label={`${rating} из 5`}
+                >
+                  <Star className={`h-4 w-4 ${rating <= reviewRating ? "fill-gold text-gold" : "text-text3"}`} />
+                </button>
+              ))}
+            </div>
+            <textarea
+              value={reviewComment}
+              onChange={(event) => setReviewComment(event.target.value)}
+              rows={3}
+              maxLength={1000}
+              className="mt-3 w-full resize-none rounded-[7px] border border-border bg-bg2 px-3 py-2 text-[13px] text-text outline-none focus:border-gold"
+              placeholder="Опишите, как прошла сделка"
+            />
+            <div className="mt-3" aria-live="polite">
+              {reviewError && <div className="text-[12px] text-danger">{reviewError}</div>}
+            </div>
+            <button
+              type="submit"
+              disabled={isSubmittingReview}
+              className="mt-4 w-full rounded-[7px] bg-gold py-2.5 text-[14px] font-medium text-white transition-colors hover:bg-gold-hover disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSubmittingReview ? "Отправляем..." : "Отправить отзыв"}
+            </button>
+          </form>
+        )}
 
         {isSeller && (
-          <div className="bg-surface border border-border rounded-[10px] p-6 mt-6">
-            <h2 className="font-heading text-[18px] font-medium text-text mb-4">
-              Изображения лота
-            </h2>
-            <ImageUpload
-              lotId={lotId}
-              existingImages={images}
-              onImagesChange={setImages}
-            />
-          </div>
+          <section className="rounded-[8px] border border-border bg-surface p-5 sm:p-6">
+            <h2 className="text-[18px] font-semibold text-text">Изображения лота</h2>
+            <div className="mt-4">
+              <ImageUpload lotId={lotId} existingImages={images} onImagesChange={setImages} />
+            </div>
+          </section>
         )}
-      </div>
+      </section>
 
-      <div>
-        <div className="bg-surface border border-border rounded-[10px] p-6 mb-6">
-          <h2 className="font-heading text-[18px] font-medium text-text mb-4">
-            История ставок
-          </h2>
-
+      <aside className="space-y-5">
+        <section className="rounded-[8px] border border-border bg-surface p-5">
+          <h2 className="text-[18px] font-semibold text-text">История ставок</h2>
           {bids.length === 0 ? (
-            <p className="text-[13px] text-text2 font-light text-center py-4">
-              Пока нет ставок
-            </p>
+            <p className="py-5 text-center text-[13px] text-text2">Пока нет ставок</p>
           ) : (
-            <div className="space-y-3">
+            <div className="mt-4 space-y-2">
               {bids.map((bid) => (
-                <div
-                  key={bid.id}
-                  className="flex items-center justify-between py-2 border-b border-border last:border-0"
-                >
-                  <div className="text-[13px] text-text2">
-                    {formatDate(bid.createdAt)}
-                  </div>
-                  <div className="text-[14px] font-medium text-gold font-mono">
-                    ₽ {formatPrice(bid.amount)}
-                  </div>
+                <div key={bid.id} className="flex items-center justify-between gap-3 border-b border-border py-2 last:border-0">
+                  <div className="text-[12px] text-text2">{formatDate(bid.createdAt)}</div>
+                  <div className="font-mono text-[14px] font-medium text-gold">{formatPrice(bid.amount)} ₽</div>
                 </div>
               ))}
             </div>
           )}
-        </div>
+        </section>
 
         {status === "Active" && (
           <BidForm
@@ -627,7 +641,16 @@ export default function LotDetailClient({
             onBidPlaced={handleBidPlaced}
           />
         )}
-      </div>
+
+        {isSeller && status === "Draft" && (
+          <button
+            onClick={handleSubmitForModeration}
+            className="w-full rounded-[7px] bg-gold py-2.5 text-[14px] font-medium text-white transition-colors hover:bg-gold-hover"
+          >
+            Отправить на модерацию
+          </button>
+        )}
+      </aside>
     </div>
   );
 }

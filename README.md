@@ -20,9 +20,9 @@
 
 ## Дизайн
 
-**Концепция:** "Modern Auction House" — вдохновение Christie's и Sotheby's.
+**Концепция:** доступный C2C marketplace с аукционным механизмом, ближе к массовому e-commerce, чем к luxury auction house.
 
-**Палитра:** тёплые нейтралы + золото.
+**Палитра:** нейтральные поверхности, синий primary action, спокойные статусные цвета.
 
 | Роль | Светлая тема | Тёмная тема |
 |---|---|---|
@@ -32,7 +32,7 @@
 | Primary | `#2563EB` | `#60A5FA` |
 | Danger | `#DC2626` | `#F87171` |
 
-**Шрифты:** Playfair Display (заголовки), Inter (UI), DM Mono (таймеры/цены).
+**Шрифты:** системный UI stack для заголовков и интерфейса, monospace для цен и технических значений.
 
 ---
 
@@ -55,12 +55,12 @@ src/
 │   └── lots/
 │       ├── [id]/page.tsx          # Lot details (SSR + metadata)
 │       ├── [id]/loading.tsx       # Lot loading skeleton
-│       └── create/page.tsx        # Create lot (Admin only)
+│       └── create/page.tsx        # Create lot draft
 │
 ├── components/
 │   ├── Header.tsx                 # Nav + search + theme toggle + auth
 │   ├── LotCard.tsx                # Lot card with live timer + cover image
-│   ├── BidForm.tsx                # Bid placement (validation, auth check)
+│   ├── BidForm.tsx                # Bid placement (validation, idempotency key, auth check)
 │   ├── ImageUpload.tsx            # Drag-and-drop image upload (MinIO)
 │   └── LotDetailClient.tsx        # Client-side lot page (SignalR, bids, gallery)
 │
@@ -119,6 +119,11 @@ Current verified state:
 - `npm run test:e2e` runs 4 Playwright Chromium smoke tests with a local E2E mock API; the full-stack marketplace spec is present, verified, and skipped unless enabled explicitly;
 - fonts are CSS system stacks defined in `src/app/globals.css`;
 - home/header/lot cards now use an accessible mass-marketplace direction instead of the old gold/luxury auction-house look;
+- login/register, lot creation and lot detail were redesigned in the same mass-marketplace direction;
+- layout has a skip link, stable `main-content` targets on key pages and global `focus-visible` styles;
+- bid placement sends a frontend-generated `idempotencyKey`;
+- separate frontend CI workflow exists in `.github/workflows/ci.yml` and runs install, lint, build and Playwright smoke tests;
+- desktop and 390px mobile visual checks passed for the refreshed public/home flow, with no horizontal overflow observed;
 - seller-facing lot creation/detail/profile screens show payout after the 1% service fee;
 - balance tab supports local demo top-up and Robokassa demo checkout redirect;
 - sellers can edit own `Draft`/`Rejected` lots from lot detail/profile and either save as draft or submit for moderation;
@@ -173,7 +178,7 @@ Detailed E2E setup and manual fallback checklist live in `docs/e2e.md`.
 - [x] SSR networking (INTERNAL_API_URL для Docker)
 - [x] Список лотов с пагинацией (SSR)
 - [x] Детали лота с SSR + SEO metadata
-- [x] Создание лота (Admin only)
+- [x] Создание лота авторизованным продавцом
 - [x] Профиль пользователя
 - [x] Тёмная/светлая тема с localStorage
 - [x] Live-таймер на карточках лотов

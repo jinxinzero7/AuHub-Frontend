@@ -149,6 +149,7 @@ export interface UpdateLotRequest extends CreateLotRequest {
 
 export interface PlaceBidRequest {
   amount: number;
+  idempotencyKey?: string;
 }
 
 export interface PlaceBidResponse {

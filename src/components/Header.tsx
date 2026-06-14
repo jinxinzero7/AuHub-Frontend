@@ -100,9 +100,11 @@ export default function Header() {
             <>
               <Link
                 href="/login"
-                className="text-[13px] font-medium px-3.5 py-2 rounded-[8px] border border-border bg-transparent text-text hover:bg-bg2 transition-colors font-ui whitespace-nowrap"
+                className="flex h-9 w-9 items-center justify-center rounded-[8px] border border-border bg-bg2 text-text transition-colors hover:border-border2 hover:bg-surface sm:w-auto sm:px-3.5 sm:py-2 sm:text-[13px] sm:font-medium sm:font-ui"
+                aria-label="Войти"
               >
-                Войти
+                <User className="h-4 w-4 sm:hidden" />
+                <span className="hidden sm:inline">Войти</span>
               </Link>
               <Link
                 href="/register"
