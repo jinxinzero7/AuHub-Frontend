@@ -110,11 +110,13 @@ npm run dev       # Dev server (Turbopack)
 npm run build     # Production build
 npm run start     # Production server
 npm run lint      # ESLint
+npm run test:e2e  # Playwright smoke tests
 ```
 
 Current verified state:
 - `npm run build` passes without Google Fonts network dependency;
 - `npm run lint` passes with 0 errors and 0 warnings;
+- `npm run test:e2e` runs 4 Playwright Chromium smoke tests with a local E2E mock API;
 - fonts are CSS system stacks defined in `src/app/globals.css`;
 - seller-facing lot creation/detail/profile screens show payout after the 1% service fee;
 - balance tab supports local demo top-up and Robokassa demo checkout redirect;
@@ -132,6 +134,20 @@ Current verified state:
 - profile uploads passport/selfie images and submits document verification requests with private object keys;
 - admin documents page can open protected document files and approve/reject pending document verification requests;
 - public registration no longer exposes Admin role selection.
+
+### E2E tests
+
+Playwright lives in this frontend repo. The default smoke suite starts:
+- a small local mock API for SSR/public-page data;
+- the Next.js dev server on `127.0.0.1:3000`;
+- Chromium tests for public app shell navigation and client-side auth form validation.
+
+```bash
+npx playwright install chromium
+npm run test:e2e
+```
+
+Full marketplace E2E through Docker/Gateway/backend services is still a separate planned step.
 
 ---
 
