@@ -26,11 +26,11 @@
 
 | Роль | Светлая тема | Тёмная тема |
 |---|---|---|
-| Background | `#F9F7F4` | `#111009` |
-| Surface | `#FFFFFF` | `#1C1914` |
-| Text | `#1A1814` | `#EDE8E0` |
-| Gold | `#B8882E` | `#CFA044` |
-| Danger | `#C0392B` | `#E05242` |
+| Background | `#F6F7F9` | `#0F172A` |
+| Surface | `#FFFFFF` | `#111827` |
+| Text | `#111827` | `#F8FAFC` |
+| Primary | `#2563EB` | `#60A5FA` |
+| Danger | `#DC2626` | `#F87171` |
 
 **Шрифты:** Playfair Display (заголовки), Inter (UI), DM Mono (таймеры/цены).
 
@@ -118,6 +118,7 @@ Current verified state:
 - `npm run lint` passes with 0 errors and 0 warnings;
 - `npm run test:e2e` runs 4 Playwright Chromium smoke tests with a local E2E mock API; the full-stack marketplace spec is present, verified, and skipped unless enabled explicitly;
 - fonts are CSS system stacks defined in `src/app/globals.css`;
+- home/header/lot cards now use an accessible mass-marketplace direction instead of the old gold/luxury auction-house look;
 - seller-facing lot creation/detail/profile screens show payout after the 1% service fee;
 - balance tab supports local demo top-up and Robokassa demo checkout redirect;
 - sellers can edit own `Draft`/`Rejected` lots from lot detail/profile and either save as draft or submit for moderation;

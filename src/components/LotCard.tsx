@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, Star } from "lucide-react";
+import { Gavel, Heart, ShieldCheck, Star, Timer, Truck } from "lucide-react";
 import { useState, useEffect } from "react";
 import { formatPrice, getTimeRemaining, formatTime } from "@/lib/utils";
 import api from "@/lib/api";
@@ -32,17 +32,28 @@ const deliveryProviderLabels: Record<string, string> = {
 };
 
 const statusLabels: Record<string, string> = {
+  Active: "Идут торги",
+  Draft: "Черновик",
+  PendingModeration: "На модерации",
+  Completed: "Завершён",
   CompletedNoWinner: "Без победителя",
+  DeliveryRequestPending: "Ожидает доставку",
+  ShippingPending: "К отправке",
+  Shipped: "Отправлен",
+  TransactionComplete: "Сделка закрыта",
 };
 
-const gradients = [
-  "linear-gradient(135deg, #1C2535 0%, #2A3545 100%)",
-  "linear-gradient(135deg, #251535 0%, #321A45 100%)",
-  "linear-gradient(135deg, #251C0D 0%, #352808 100%)",
-  "linear-gradient(135deg, #0F2A1A 0%, #163520 100%)",
-  "linear-gradient(135deg, #1A1040 0%, #251855 100%)",
-  "linear-gradient(135deg, #1E1E28 0%, #282835 100%)",
+const placeholderStyles = [
+  "bg-[linear-gradient(135deg,#E0F2FE_0%,#F8FAFC_52%,#DCFCE7_100%)]",
+  "bg-[linear-gradient(135deg,#F1F5F9_0%,#DBEAFE_48%,#F8FAFC_100%)]",
+  "bg-[linear-gradient(135deg,#ECFDF5_0%,#F8FAFC_54%,#E0E7FF_100%)]",
+  "bg-[linear-gradient(135deg,#F8FAFC_0%,#E2E8F0_50%,#FEF3C7_100%)]",
 ];
+
+function stableIndex(value: string, length: number) {
+  const sum = Array.from(value).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return sum % length;
+}
 
 export default function LotCard({ lot }: LotCardProps) {
   const [time, setTime] = useState(() => getTimeRemaining(lot.endTime, lot.startTime));
@@ -85,45 +96,48 @@ export default function LotCard({ lot }: LotCardProps) {
     };
   }, [lot.sellerId]);
 
-  const gradient = gradients[parseInt(lot.id.replace(/-/g, ""), 36) % gradients.length];
   const isUrgent = time.seconds < 120 && time.isLive;
   const isActive = lot.status === "Active";
   const hasCoverImage = !!lot.coverImageUrl;
-  const imageUrl = hasCoverImage ? lot.coverImageUrl! : null;
+  const placeholderClass = placeholderStyles[stableIndex(lot.id, placeholderStyles.length)];
+  const statusLabel = statusLabels[lot.status] ?? lot.status;
+  const hasReviews = !!sellerReviews && sellerReviews.reviewsCount > 0;
+  const hasVerifiedDocs = sellerProfile?.documentVerificationStatus === "Verified";
 
   return (
-    <Link href={`/lots/${lot.id}`} className="group bg-surface border border-border rounded-[10px] overflow-hidden hover:border-gold hover:translate-y-[-1px] transition-all duration-200 block">
-      <div className="w-full h-[162px] relative overflow-hidden" style={{ background: hasCoverImage ? undefined : gradient }}>
-        {hasCoverImage && imageUrl && (
+    <Link
+      href={`/lots/${lot.id}`}
+      className="group block overflow-hidden rounded-[8px] border border-border bg-surface transition-all duration-200 hover:-translate-y-0.5 hover:border-border2 hover:shadow-[0_12px_28px_rgba(15,23,42,0.08)]"
+    >
+      <div className={`relative aspect-[4/3] overflow-hidden ${hasCoverImage ? "bg-bg2" : placeholderClass}`}>
+        {hasCoverImage && lot.coverImageUrl && (
           <Image
-            src={imageUrl}
+            src={lot.coverImageUrl}
             alt={lot.title}
             fill
-            sizes="(max-width: 768px) 100vw, 320px"
-            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 360px"
+            className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
             unoptimized
           />
         )}
-        <div className="absolute top-[10px] left-[10px]">
-          {time.isLive ? (
-            <span className="text-[10px] font-medium px-2 py-[3px] rounded bg-[rgba(192,57,43,0.2)] text-[#E05242] tracking-[0.2px]">
-              Идут торги
-            </span>
-          ) : lot.status === "Draft" ? (
-            <span className="text-[10px] font-medium px-2 py-[3px] rounded bg-[rgba(184,136,46,0.2)] text-gold tracking-[0.2px]">
-              Черновик
-            </span>
-          ) : lot.status === "PendingModeration" ? (
-            <span className="text-[10px] font-medium px-2 py-[3px] rounded bg-[rgba(184,136,46,0.2)] text-gold tracking-[0.2px]">
-              На модерации
-            </span>
-          ) : lot.status === "CompletedNoWinner" ? (
-            <span className="text-[10px] font-medium px-2 py-[3px] rounded bg-[rgba(107,114,128,0.2)] text-text2 tracking-[0.2px]">
-              Без победителя
-            </span>
-          ) : (
-            <span className="text-[10px] font-medium px-2 py-[3px] rounded bg-[rgba(184,136,46,0.2)] text-gold tracking-[0.2px]">
-              Завершён
+
+        {!hasCoverImage && (
+          <div className="absolute inset-0 flex items-center justify-center text-text3">
+            <Gavel className="w-10 h-10" />
+          </div>
+        )}
+
+        <div className="absolute left-3 top-3 flex flex-wrap gap-2">
+          <span className={`rounded-[7px] px-2.5 py-1 text-[11px] font-medium ${
+            isActive
+              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+              : "bg-white/90 text-text2 border border-white/70"
+          }`}>
+            {statusLabel}
+          </span>
+          {isUrgent && (
+            <span className="rounded-[7px] bg-danger-bg border border-danger/20 px-2.5 py-1 text-[11px] font-medium text-danger">
+              Скоро конец
             </span>
           )}
         </div>
@@ -134,76 +148,72 @@ export default function LotCard({ lot }: LotCardProps) {
             e.stopPropagation();
             setIsFav(!isFav);
           }}
-          className="absolute top-[10px] right-[10px] w-[28px] h-[28px] rounded-[6px] bg-[rgba(0,0,0,0.35)] border-none cursor-pointer flex items-center justify-center text-[rgba(255,255,255,0.7)] hover:bg-[rgba(0,0,0,0.6)] hover:text-white transition-colors"
+          className="absolute right-3 top-3 w-9 h-9 rounded-[8px] border border-white/70 bg-white/90 text-text2 flex items-center justify-center transition-colors hover:text-danger"
           aria-label="В избранное"
         >
-          <Heart className={`w-[13px] h-[13px] ${isFav ? "fill-[#E8B84B] text-[#E8B84B]" : ""}`} />
+          <Heart className={`w-4 h-4 ${isFav ? "fill-danger text-danger" : ""}`} />
         </button>
       </div>
 
-      <div className="p-[13px]">
-        <div className="text-[10.5px] text-text3 mb-1 tracking-[0.1px]">
-          {statusLabels[lot.status] ?? lot.status}
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="min-h-[42px] text-[15px] font-semibold leading-[1.35] text-text line-clamp-2">
+            {lot.title}
+          </h3>
+          <div className="shrink-0 text-right">
+            <div className="text-[18px] font-semibold text-text font-mono tracking-[-0.3px]">
+              ₽ {formatPrice(lot.currentPrice)}
+            </div>
+            <div className="text-[11px] text-text3 mt-0.5">
+              {lot.bidsCount} ставок
+            </div>
+          </div>
         </div>
-        <h3 className="text-[13.5px] font-medium text-text mb-[11px] font-heading leading-[1.4] min-h-[38px] line-clamp-2">
-          {lot.title}
-        </h3>
-        <div className="flex items-center gap-1.5 text-[11px] text-text2 mb-[10px]">
-          <Star className={`w-3 h-3 ${sellerReviews && sellerReviews.reviewsCount > 0 ? "fill-gold text-gold" : "text-text3"}`} />
-          {sellerReviews && sellerReviews.reviewsCount > 0 ? (
+
+        <div className="mt-3 flex items-center gap-2 text-[12px] text-text2">
+          <Star className={`w-4 h-4 ${hasReviews ? "fill-amber-400 text-amber-400" : "text-text3"}`} />
+          {hasReviews ? (
             <span>{sellerReviews.averageRating.toFixed(1)} · {sellerReviews.reviewsCount} отзывов</span>
           ) : (
             <span>Новый продавец</span>
           )}
+          {hasVerifiedDocs && (
+            <span className="inline-flex items-center gap-1 text-emerald-700">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              проверен
+            </span>
+          )}
         </div>
-        <div className="mb-[10px] flex flex-wrap gap-1">
+
+        <div className="mt-3 flex flex-wrap gap-1.5">
           {sellerTrust && (
-            <span className="inline-flex items-center rounded bg-bg2 border border-border px-2 py-[3px] text-[10.5px] text-text2">
+            <span className="inline-flex items-center rounded-[6px] bg-bg2 border border-border px-2 py-1 text-[11px] text-text2">
               Надёжность {sellerTrust.score}/100
             </span>
           )}
-          {sellerProfile?.documentVerificationStatus === "Verified" && (
-            <span className="inline-flex items-center rounded bg-green-50 border border-green-200 px-2 py-[3px] text-[10.5px] text-green-700">
-              Документы
+          {lot.supportedDeliveryProviders?.map((provider) => (
+            <span key={provider} className="inline-flex items-center gap-1 rounded-[6px] bg-bg2 border border-border px-2 py-1 text-[11px] text-text2">
+              <Truck className="w-3 h-3" />
+              {deliveryProviderLabels[provider] ?? provider}
+            </span>
+          ))}
+        </div>
+
+        <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
+          <div className="flex items-center gap-1.5 text-[12px] text-text2">
+            <Timer className={`w-4 h-4 ${isUrgent ? "text-danger" : "text-text3"}`} />
+            <span>{time.isLive ? "Осталось" : "Начало через"}</span>
+            <span className={`font-mono font-medium ${isUrgent ? "text-danger" : "text-text"}`}>
+              {formatTime(time.seconds)}
+            </span>
+          </div>
+
+          {isActive && (
+            <span className="text-[12px] font-medium text-gold">
+              Сделать ставку
             </span>
           )}
         </div>
-        {lot.supportedDeliveryProviders && lot.supportedDeliveryProviders.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-[10px]">
-            {lot.supportedDeliveryProviders.map((provider) => (
-              <span key={provider} className="text-[10px] px-1.5 py-[2px] rounded bg-bg2 text-text2 border border-border">
-                {deliveryProviderLabels[provider] ?? provider}
-              </span>
-            ))}
-          </div>
-        )}
-
-        <div className="flex items-end justify-between pt-[10px] border-t border-border">
-          <div>
-            <div className="text-[10px] text-text2 mb-[2px] font-light">Текущая ставка</div>
-            <div className="text-[17px] font-medium text-gold font-mono tracking-[-0.3px]">
-              ₽ {formatPrice(lot.currentPrice)}
-            </div>
-            <div className="text-[10px] text-text3 mt-[2px]">
-              {lot.bidsCount} ставок
-            </div>
-          </div>
-
-          <div className="text-right">
-            <div className="text-[10px] text-text2 mb-[2px] font-light">
-              {time.isLive ? "Осталось" : "Начало через"}
-            </div>
-            <div className={`text-[15px] font-medium font-mono tracking-[0.5px] ${isUrgent ? "text-danger" : "text-text"}`}>
-              {formatTime(time.seconds)}
-            </div>
-          </div>
-        </div>
-
-        {isActive && (
-          <button className="block w-full mt-[11px] py-2 rounded-[7px] border-none bg-gold text-[#FFF8E8] text-[12.5px] font-medium cursor-pointer font-ui tracking-[0.1px] hover:bg-gold-hover transition-colors">
-            Сделать ставку →
-          </button>
-        )}
       </div>
     </Link>
   );

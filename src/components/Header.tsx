@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Sun, Moon, Search, User } from "lucide-react";
+import { Moon, Plus, Search, Sun, User } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import NotificationBell from "./NotificationBell";
@@ -16,11 +16,7 @@ export default function Header() {
 
   const handleSearch = () => {
     const q = searchQuery.trim();
-    if (q) {
-      router.push(`/?search=${encodeURIComponent(q)}`);
-    } else {
-      router.push("/");
-    }
+    router.push(q ? `/?search=${encodeURIComponent(q)}` : "/");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -30,45 +26,50 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-surface border-b border-border transition-colors duration-250">
-      <div className="max-w-[960px] mx-auto px-4 sm:px-8 h-[58px] flex items-center gap-4">
-        <Link href="/" className="font-heading text-[22px] font-semibold tracking-[-0.5px] shrink-0">
+    <header className="sticky top-0 z-50 bg-surface/95 border-b border-border backdrop-blur transition-colors duration-250">
+      <div className="max-w-[1120px] mx-auto px-4 sm:px-6 h-[64px] flex items-center gap-4">
+        <Link href="/" className="text-[22px] font-bold tracking-[-0.2px] shrink-0">
           <span className="text-gold">Au</span>
           <span className="text-text">Hub</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-6 ml-4">
-          <Link href="/" className="text-[13.5px] text-text2 hover:text-text border-b-2 border-transparent hover:border-gold transition-colors duration-150">
+        <nav className="hidden md:flex items-center gap-5 ml-2">
+          <Link href="/" className="text-[14px] text-text2 hover:text-text transition-colors duration-150">
             Аукционы
           </Link>
-          {isAuthenticated && (
-            <Link href="/lots/create" className="text-[13.5px] text-text2 hover:text-text border-b-2 border-transparent hover:border-gold transition-colors duration-150">
-              Создать лот
-            </Link>
-          )}
           {isAuthenticated && user?.role === 1 && (
-            <Link href="/admin" className="text-[13.5px] text-text2 hover:text-text border-b-2 border-transparent hover:border-gold transition-colors duration-150">
+            <Link href="/admin" className="text-[14px] text-text2 hover:text-text transition-colors duration-150">
               Админ
             </Link>
           )}
         </nav>
 
         <div className="ml-auto flex items-center gap-2.5">
-          <div className="hidden sm:flex items-center gap-1.5 bg-bg2 border border-border rounded-[7px] px-3 py-1.5 w-[210px] transition-colors focus-within:border-gold">
-            <Search className="w-[15px] h-[15px] text-text3 shrink-0 cursor-pointer" onClick={handleSearch} />
+          <div className="hidden sm:flex items-center gap-2 bg-bg2 border border-border rounded-[8px] px-3 py-2 w-[260px] lg:w-[340px] transition-colors focus-within:border-gold focus-within:bg-surface">
+            <Search className="w-4 h-4 text-text3 shrink-0 cursor-pointer" onClick={handleSearch} />
             <input
               type="text"
-              placeholder="Поиск лотов…"
+              placeholder="Поиск лотов"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="bg-transparent border-none outline-none text-[13px] text-text placeholder:text-text3 w-full font-ui"
+              className="bg-transparent border-none outline-none text-[14px] text-text placeholder:text-text3 w-full font-ui"
             />
           </div>
 
+          {isAuthenticated && (
+            <Link
+              href="/lots/create"
+              className="hidden md:inline-flex items-center gap-1.5 text-[13px] font-medium px-3.5 py-2 rounded-[8px] border border-gold bg-gold text-white hover:bg-gold-hover transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Лот
+            </Link>
+          )}
+
           <button
             onClick={toggleTheme}
-            className="w-[34px] h-[34px] rounded-[7px] border border-border bg-surface text-text2 hover:bg-bg2 hover:border-border2 transition-colors flex items-center justify-center"
+            className="w-9 h-9 rounded-[8px] border border-border bg-surface text-text2 hover:bg-bg2 hover:border-border2 transition-colors flex items-center justify-center"
             aria-label="Переключить тему"
           >
             {theme === "dark" ? (
@@ -83,14 +84,14 @@ export default function Header() {
               <NotificationBell />
               <Link
                 href="/profile"
-                className="w-[34px] h-[34px] rounded-[7px] border border-border bg-surface text-text2 hover:bg-bg2 hover:border-border2 transition-colors flex items-center justify-center"
+                className="w-9 h-9 rounded-[8px] border border-border bg-surface text-text2 hover:bg-bg2 hover:border-border2 transition-colors flex items-center justify-center"
                 aria-label="Профиль"
               >
                 <User className="w-4 h-4" />
               </Link>
               <button
                 onClick={logout}
-                className="text-[13px] font-normal px-4 py-1.5 rounded-[7px] border border-border bg-transparent text-text hover:bg-bg2 transition-colors font-ui"
+                className="text-[13px] font-medium px-3.5 py-2 rounded-[8px] border border-border bg-transparent text-text hover:bg-bg2 transition-colors font-ui"
               >
                 Выйти
               </button>
@@ -99,13 +100,13 @@ export default function Header() {
             <>
               <Link
                 href="/login"
-                className="text-[13px] font-normal px-4 py-1.5 rounded-[7px] border border-border bg-transparent text-text hover:bg-bg2 transition-colors font-ui whitespace-nowrap"
+                className="text-[13px] font-medium px-3.5 py-2 rounded-[8px] border border-border bg-transparent text-text hover:bg-bg2 transition-colors font-ui whitespace-nowrap"
               >
                 Войти
               </Link>
               <Link
                 href="/register"
-                className="text-[13px] font-medium px-4 py-1.5 rounded-[7px] border-none bg-gold text-[#FFF8E8] hover:bg-gold-hover transition-colors font-ui whitespace-nowrap"
+                className="text-[13px] font-medium px-3.5 py-2 rounded-[8px] border border-gold bg-gold text-white hover:bg-gold-hover transition-colors font-ui whitespace-nowrap"
               >
                 Регистрация
               </Link>
