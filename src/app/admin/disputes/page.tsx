@@ -1,7 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import api from "@/lib/api";
+import { API_ENDPOINTS } from "@/lib/constants";
+import { getApiErrorMessage } from "@/lib/errors";
+import { formatPrice } from "@/lib/utils";
+import { Alert, EmptyState, LoadingState, PageHeader } from "@/components/UiState";
 
 interface LotItem {
   id: string;
@@ -16,12 +21,15 @@ export default function DisputesPage() {
   const [lots, setLots] = useState<LotItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [resolving, setResolving] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchLots = () => {
     setLoading(true);
-    api.get("/api/admin/disputes")
+    setError(null);
+    api.get(API_ENDPOINTS.ADMIN.DISPUTES)
       .then((res) => setLots(Array.isArray(res.data) ? res.data : []))
-      .catch((err) => console.error("Failed to fetch disputes:", err))
+      .catch((err) => setError(getApiErrorMessage(err, "Не удалось загрузить споры")))
       .finally(() => setLoading(false));
   };
 
@@ -29,52 +37,70 @@ export default function DisputesPage() {
     void Promise.resolve().then(fetchLots);
   }, []);
 
-  const resolve = async (id: string, inFavorOfBuyer: boolean) => {
-    setResolving(id);
+  const resolve = async (lot: LotItem, inFavorOfBuyer: boolean) => {
+    setResolving(lot.id);
+    setError(null);
+    setMessage(null);
     try {
-      await api.post(`/api/lots/${id}/resolve-dispute`, { inFavorOfBuyer });
-      setLots((prev) => prev.filter((l) => l.id !== id));
+      await api.post(API_ENDPOINTS.LOTS.RESOLVE_DISPUTE(lot.id), { inFavorOfBuyer });
+      setLots((prev) => prev.filter((item) => item.id !== lot.id));
+      setMessage(`Спор по лоту «${lot.title}» решён в пользу ${inFavorOfBuyer ? "покупателя" : "продавца"}`);
     } catch (err) {
-      console.error(`Failed to resolve dispute for lot ${id}:`, err);
+      setError(getApiErrorMessage(err, "Не удалось решить спор"));
+    } finally {
+      setResolving(null);
     }
-    finally { setResolving(null); }
   };
 
-  if (loading) return <div className="text-center py-12 text-text3 text-[13px]">Загрузка...</div>;
-
-  if (lots.length === 0) return <div className="text-center py-12 text-text3 text-[13px]">Нет открытых споров</div>;
+  if (loading) return <LoadingState />;
 
   return (
     <div>
-      <h1 className="font-heading text-[24px] font-semibold text-text mb-6">Споры</h1>
-      <div className="space-y-3">
-        {lots.map((lot) => (
-          <div key={lot.id} className="bg-surface border border-border rounded-[10px] p-5">
-            <div className="mb-3">
-              <h2 className="text-[15px] font-medium text-text mb-1">{lot.title}</h2>
-              <div className="text-[12px] text-text2">
-                Сумма: {lot.currentPrice} ₽ · Создан: {new Date(lot.createdAt).toLocaleDateString("ru-RU")}
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => resolve(lot.id, true)}
-                disabled={resolving === lot.id}
-                className="px-4 py-1.5 rounded-[7px] border-none bg-green-600 text-white text-[13px] font-medium font-ui hover:bg-green-700 transition-colors disabled:opacity-50"
-              >
-                В пользу покупателя
-              </button>
-              <button
-                onClick={() => resolve(lot.id, false)}
-                disabled={resolving === lot.id}
-                className="px-4 py-1.5 rounded-[7px] border-none bg-blue-600 text-white text-[13px] font-medium font-ui hover:bg-blue-700 transition-colors disabled:opacity-50"
-              >
-                В пользу продавца
-              </button>
-            </div>
-          </div>
-        ))}
+      <PageHeader
+        title="Споры"
+        description="Решение спора завершает escrow-сценарий: покупатель получает refund или продавец получает payout."
+      />
+
+      <div className="mb-4 space-y-2" aria-live="polite">
+        {message && <Alert tone="success">{message}</Alert>}
+        {error && <Alert>{error}</Alert>}
       </div>
+
+      {lots.length === 0 ? (
+        <EmptyState title="Нет открытых споров" description="Споры появятся здесь после обращения победителя сделки." />
+      ) : (
+        <div className="space-y-3">
+          {lots.map((lot) => (
+            <article key={lot.id} className="rounded-[8px] border border-border bg-surface p-5">
+              <Link href={`/lots/${lot.id}`} className="text-[16px] font-semibold text-text hover:text-gold">
+                {lot.title}
+              </Link>
+              <div className="mt-3 grid gap-2 text-[12px] text-text2 sm:grid-cols-2">
+                <span>Сумма: {formatPrice(lot.currentPrice)} ₽</span>
+                <span>Создан: {new Date(lot.createdAt).toLocaleDateString("ru-RU")}</span>
+                <span className="break-all">Seller: {lot.sellerId}</span>
+                <span className="break-all">Winner: {lot.winnerId ?? "нет"}</span>
+              </div>
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                <button
+                  onClick={() => resolve(lot, true)}
+                  disabled={resolving === lot.id}
+                  className="rounded-[7px] bg-green-600 px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {resolving === lot.id ? "Обработка..." : "В пользу покупателя"}
+                </button>
+                <button
+                  onClick={() => resolve(lot, false)}
+                  disabled={resolving === lot.id}
+                  className="rounded-[7px] bg-gold px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-gold-hover disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {resolving === lot.id ? "Обработка..." : "В пользу продавца"}
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

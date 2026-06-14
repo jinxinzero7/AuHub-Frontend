@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import Header from "@/components/Header";
+import { Alert, EmptyState, LoadingState } from "@/components/UiState";
 import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/constants";
+import { getApiErrorMessage } from "@/lib/errors";
 import { calculateSellerPayout, calculateServiceFee, formatPrice } from "@/lib/utils";
 import { validateLotDescription, validateLotTitle, validateStartingPrice } from "@/lib/validation";
 import type { Lot } from "@/types";
@@ -51,27 +54,27 @@ export default function EditLotPage() {
         setDurationHours(loadedLot.durationHours || 48);
         setSupportedDeliveryProviders(loadedLot.supportedDeliveryProviders?.length ? loadedLot.supportedDeliveryProviders : ["Cdek"]);
       })
-      .catch(() => setServerError("Не удалось загрузить лот"))
+      .catch((err) => setServerError(getApiErrorMessage(err, "Не удалось загрузить лот")))
       .finally(() => setIsLoadingLot(false));
   }, [lotId]);
 
   const canEdit = lot && user?.id === lot.sellerId && (lot.status === "Draft" || lot.status === "Rejected");
 
   const validate = () => {
-    const newErrors: Record<string, string> = {};
-    const titleErr = validateLotTitle(title);
-    const descErr = validateLotDescription(description);
-    const priceErr = validateStartingPrice(startingPrice);
+    const nextErrors: Record<string, string> = {};
+    const titleError = validateLotTitle(title);
+    const descriptionError = validateLotDescription(description);
+    const priceError = validateStartingPrice(startingPrice);
 
-    if (titleErr) newErrors.title = titleErr;
-    if (descErr) newErrors.description = descErr;
-    if (priceErr) newErrors.startingPrice = priceErr;
+    if (titleError) nextErrors.title = titleError;
+    if (descriptionError) nextErrors.description = descriptionError;
+    if (priceError) nextErrors.startingPrice = priceError;
     if (supportedDeliveryProviders.length === 0) {
-      newErrors.supportedDeliveryProviders = "Выберите хотя бы одну службу доставки";
+      nextErrors.supportedDeliveryProviders = "Выберите хотя бы одну службу доставки";
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   };
 
   const save = async (submitForModeration: boolean) => {
@@ -90,26 +93,18 @@ export default function EditLotPage() {
       });
       router.push(`/lots/${lotId}`);
     } catch (err: unknown) {
-      if (err instanceof Error && "response" in err) {
-        const axiosErr = err as { response?: { data?: { errors?: Record<string, string[]>; detail?: string; title?: string } } };
-        const data = axiosErr.response?.data;
-        setServerError(data?.errors ? Object.values(data.errors).flat().join(", ") : data?.detail ?? data?.title ?? "Ошибка сохранения лота");
-      } else {
-        setServerError("Ошибка сохранения лота");
-      }
+      setServerError(getApiErrorMessage(err, "Не удалось сохранить лот"));
     } finally {
       setIsSaving(false);
     }
   };
 
   const fieldClass = (field: string) =>
-    `w-full px-3 py-2.5 text-[14px] bg-bg2 border rounded-[7px] text-text placeholder:text-text3 outline-none transition-colors font-ui ${errors[field] ? "border-danger" : "border-border focus:border-gold"}`;
+    `w-full rounded-[7px] border bg-bg2 px-3 py-2.5 text-[14px] text-text outline-none transition-colors placeholder:text-text3 ${errors[field] ? "border-danger" : "border-border focus:border-gold"}`;
 
   const toggleDeliveryProvider = (provider: string) => {
     setSupportedDeliveryProviders((prev) =>
-      prev.includes(provider)
-        ? prev.filter((item) => item !== provider)
-        : [...prev, provider]
+      prev.includes(provider) ? prev.filter((item) => item !== provider) : [...prev, provider],
     );
     setErrors((prev) => ({ ...prev, supportedDeliveryProviders: "" }));
   };
@@ -123,10 +118,9 @@ export default function EditLotPage() {
     return (
       <>
         <Header />
-        <main id="main-content" className="bg-bg min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="font-heading text-[28px] text-text mb-2">Доступ запрещён</h1>
-            <p className="text-text2 text-[14px] font-light">Войдите, чтобы редактировать лот</p>
+        <main id="main-content" className="flex min-h-screen items-center justify-center bg-bg px-4">
+          <div className="max-w-[460px]">
+            <EmptyState title="Нужен вход" description="Войдите, чтобы редактировать свои лоты." actionHref="/login" actionLabel="Войти" />
           </div>
         </main>
       </>
@@ -137,8 +131,10 @@ export default function EditLotPage() {
     return (
       <>
         <Header />
-        <main id="main-content" className="bg-bg min-h-screen flex items-center justify-center">
-          <div className="text-text3 text-[14px]">Загрузка...</div>
+        <main id="main-content" className="min-h-screen bg-bg px-4 py-10">
+          <div className="mx-auto max-w-[760px]">
+            <LoadingState />
+          </div>
         </main>
       </>
     );
@@ -148,12 +144,14 @@ export default function EditLotPage() {
     return (
       <>
         <Header />
-        <main id="main-content" className="bg-bg min-h-screen flex items-center justify-center">
-          <div className="text-center max-w-[420px] px-4">
-            <h1 className="font-heading text-[28px] text-text mb-2">Редактирование недоступно</h1>
-            <p className="text-text2 text-[14px] font-light">
-              Изменять можно только свои лоты в статусе черновика или после отклонения модерацией.
-            </p>
+        <main id="main-content" className="flex min-h-screen items-center justify-center bg-bg px-4">
+          <div className="max-w-[520px]">
+            <EmptyState
+              title="Редактирование недоступно"
+              description="Изменять можно только свои лоты в статусе черновика или после отклонения модерацией. Лот на модерации уже заблокирован от изменений."
+              actionHref={lot ? `/lots/${lot.id}` : "/"}
+              actionLabel="Вернуться к лоту"
+            />
           </div>
         </main>
       </>
@@ -163,104 +161,102 @@ export default function EditLotPage() {
   return (
     <>
       <Header />
-      <main id="main-content" className="bg-bg min-h-screen">
-        <div className="max-w-[640px] mx-auto px-4 sm:px-8 py-10">
-          <h1 className="font-heading text-[28px] font-semibold text-text mb-2">Редактировать лот</h1>
-          <p className="text-[13px] text-text2 mb-6">
-            После сохранения отклонённый лот вернётся в черновик. Лот на модерации редактировать нельзя.
-          </p>
+      <main id="main-content" className="min-h-screen bg-bg">
+        <div className="mx-auto grid max-w-[1120px] gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <section className="rounded-[8px] border border-border bg-surface p-5 sm:p-6">
+            <div className="mb-6">
+              <p className="text-[13px] font-medium text-gold">Редактирование лота</p>
+              <h1 className="mt-1 text-[28px] font-semibold text-text">{lot.title}</h1>
+              <p className="mt-2 text-[14px] leading-6 text-text2">
+                Сохранение без отправки оставит лот черновиком. Отправка передаст его на модерацию.
+              </p>
+            </div>
 
-          <div className="bg-surface border border-border rounded-[10px] p-8">
             <form onSubmit={(event) => event.preventDefault()} className="space-y-5" noValidate>
-              {serverError && (
-                <div className="text-[13px] text-danger bg-danger-bg border border-danger/20 rounded-[7px] px-4 py-2.5">
-                  {serverError}
-                </div>
-              )}
-
-              {lot.adminComment && (
-                <div className="text-[13px] text-text2 bg-bg2 border border-border rounded-[7px] px-4 py-2.5">
-                  Причина отклонения: {lot.adminComment}
-                </div>
-              )}
+              {serverError && <Alert>{serverError}</Alert>}
+              {lot.adminComment && <Alert tone="info">Причина отклонения: {lot.adminComment}</Alert>}
 
               <div>
-                <label htmlFor="title" className="block text-[13px] font-medium text-text2 mb-1.5">Название</label>
+                <label htmlFor="title" className="mb-1.5 block text-[13px] font-medium text-text2">Название</label>
                 <input
                   id="title"
                   type="text"
                   value={title}
-                  onChange={(event) => { setTitle(event.target.value); setErrors((prev) => ({ ...prev, title: "" })); }}
+                  onChange={(event) => {
+                    setTitle(event.target.value);
+                    setErrors((prev) => ({ ...prev, title: "" }));
+                  }}
                   className={fieldClass("title")}
                   placeholder="Название лота"
                 />
-                {errors.title && <p className="text-[12px] text-danger mt-1">{errors.title}</p>}
+                {errors.title && <p className="mt-1 text-[12px] text-danger">{errors.title}</p>}
               </div>
 
               <div>
-                <label htmlFor="description" className="block text-[13px] font-medium text-text2 mb-1.5">Описание</label>
+                <label htmlFor="description" className="mb-1.5 block text-[13px] font-medium text-text2">Описание</label>
                 <textarea
                   id="description"
                   value={description}
-                  onChange={(event) => { setDescription(event.target.value); setErrors((prev) => ({ ...prev, description: "" })); }}
-                  rows={4}
+                  onChange={(event) => {
+                    setDescription(event.target.value);
+                    setErrors((prev) => ({ ...prev, description: "" }));
+                  }}
+                  rows={5}
                   className={fieldClass("description")}
                   placeholder="Описание лота"
                 />
-                {errors.description && <p className="text-[12px] text-danger mt-1">{errors.description}</p>}
+                {errors.description && <p className="mt-1 text-[12px] text-danger">{errors.description}</p>}
               </div>
 
-              <div>
-                <label htmlFor="startingPrice" className="block text-[13px] font-medium text-text2 mb-1.5">Стартовая цена (₽)</label>
-                <input
-                  id="startingPrice"
-                  type="number"
-                  value={startingPrice}
-                  onChange={(event) => { setStartingPrice(event.target.value); setErrors((prev) => ({ ...prev, startingPrice: "" })); }}
-                  className={fieldClass("startingPrice")}
-                  placeholder="1000"
-                />
-                {errors.startingPrice && <p className="text-[12px] text-danger mt-1">{errors.startingPrice}</p>}
-                {hasPayoutPreview && (
-                  <div className="mt-2 rounded-[7px] border border-border bg-bg2 px-3 py-2 text-[12px] text-text2">
-                    <div>Комиссия сервиса 1%: ₽ {formatPrice(serviceFee)}</div>
-                    <div className="mt-0.5 text-text font-medium">
-                      С учетом комиссии вы получите ₽ {formatPrice(sellerPayout)}
-                    </div>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="startingPrice" className="mb-1.5 block text-[13px] font-medium text-text2">Стартовая цена</label>
+                  <input
+                    id="startingPrice"
+                    type="number"
+                    value={startingPrice}
+                    onChange={(event) => {
+                      setStartingPrice(event.target.value);
+                      setErrors((prev) => ({ ...prev, startingPrice: "" }));
+                    }}
+                    className={fieldClass("startingPrice")}
+                    placeholder="1000"
+                    min={1}
+                  />
+                  {errors.startingPrice && <p className="mt-1 text-[12px] text-danger">{errors.startingPrice}</p>}
+                </div>
+
+                <div>
+                  <span className="mb-1.5 block text-[13px] font-medium text-text2">Длительность</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {DURATION_PRESETS.map((preset) => (
+                      <button
+                        key={preset.hours}
+                        type="button"
+                        onClick={() => setDurationHours(preset.hours)}
+                        className={`rounded-[7px] border px-3 py-2.5 text-[13px] font-medium transition-colors ${
+                          durationHours === preset.hours
+                            ? "border-gold bg-gold text-white"
+                            : "border-border bg-bg2 text-text2 hover:border-gold"
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
                   </div>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-[13px] font-medium text-text2 mb-2">Длительность аукциона</label>
-                <div className="grid grid-cols-4 gap-2">
-                  {DURATION_PRESETS.map((preset) => (
-                    <button
-                      key={preset.hours}
-                      type="button"
-                      onClick={() => setDurationHours(preset.hours)}
-                      className={`py-2.5 rounded-[7px] text-[13px] font-medium transition-colors font-ui border ${
-                        durationHours === preset.hours
-                          ? "bg-gold text-[#FFF8E8] border-gold"
-                          : "bg-bg2 text-text2 border-border hover:border-gold"
-                      }`}
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
                 </div>
               </div>
 
               <div>
-                <label className="block text-[13px] font-medium text-text2 mb-2">Службы доставки</label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <span className="mb-2 block text-[13px] font-medium text-text2">Службы доставки</span>
+                <div className="grid gap-2 sm:grid-cols-3">
                   {DELIVERY_PROVIDERS.map((provider) => (
                     <label
                       key={provider.value}
-                      className={`flex items-center gap-2 px-3 py-2.5 rounded-[7px] border text-[13px] font-ui cursor-pointer transition-colors ${
+                      className={`flex cursor-pointer items-center gap-2 rounded-[7px] border px-3 py-2.5 text-[13px] transition-colors ${
                         supportedDeliveryProviders.includes(provider.value)
-                          ? "bg-gold-light text-text border-gold"
-                          : "bg-bg2 text-text2 border-border hover:border-gold"
+                          ? "border-gold bg-gold-light text-text"
+                          : "border-border bg-bg2 text-text2 hover:border-gold"
                       }`}
                     >
                       <input
@@ -274,16 +270,16 @@ export default function EditLotPage() {
                   ))}
                 </div>
                 {errors.supportedDeliveryProviders && (
-                  <p className="text-[12px] text-danger mt-1">{errors.supportedDeliveryProviders}</p>
+                  <p className="mt-1 text-[12px] text-danger">{errors.supportedDeliveryProviders}</p>
                 )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <button
                   type="button"
                   onClick={() => save(false)}
                   disabled={isSaving}
-                  className="w-full py-2.5 rounded-[7px] border border-border bg-bg2 text-text text-[14px] font-medium cursor-pointer font-ui hover:border-gold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="rounded-[7px] border border-border bg-bg2 py-2.5 text-[14px] font-medium text-text transition-colors hover:border-gold disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isSaving ? "Сохранение..." : "Сохранить черновик"}
                 </button>
@@ -291,13 +287,34 @@ export default function EditLotPage() {
                   type="button"
                   onClick={() => save(true)}
                   disabled={isSaving}
-                  className="w-full py-2.5 rounded-[7px] border-none bg-gold text-[#FFF8E8] text-[14px] font-medium cursor-pointer font-ui hover:bg-gold-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="rounded-[7px] bg-gold py-2.5 text-[14px] font-medium text-white transition-colors hover:bg-gold-hover disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isSaving ? "Сохранение..." : "Сохранить и отправить"}
                 </button>
               </div>
             </form>
-          </div>
+          </section>
+
+          <aside className="h-fit rounded-[8px] border border-border bg-surface p-5">
+            <h2 className="text-[17px] font-semibold text-text">Расчёт выплаты</h2>
+            <div className="mt-4 space-y-3 text-[13px]">
+              <div className="flex justify-between gap-4 border-b border-border pb-3 text-text2">
+                <span>Цена лота</span>
+                <span className="font-medium text-text">{hasPayoutPreview ? `${formatPrice(startingPriceNumber)} ₽` : "не указана"}</span>
+              </div>
+              <div className="flex justify-between gap-4 border-b border-border pb-3 text-text2">
+                <span>Комиссия AuHub 1%</span>
+                <span className="font-medium text-text">{hasPayoutPreview ? `${formatPrice(serviceFee)} ₽` : "0 ₽"}</span>
+              </div>
+              <div className="rounded-[7px] bg-gold-light p-3">
+                <div className="text-[12px] text-text2">С учётом комиссии вы получите</div>
+                <div className="mt-1 text-[22px] font-semibold text-text">{hasPayoutPreview ? `${formatPrice(sellerPayout)} ₽` : "0 ₽"}</div>
+              </div>
+            </div>
+            <Link href={`/lots/${lotId}`} className="mt-4 inline-flex w-full justify-center rounded-[7px] border border-border px-4 py-2 text-[13px] font-medium text-text hover:border-gold">
+              Вернуться к лоту
+            </Link>
+          </aside>
         </div>
       </main>
     </>

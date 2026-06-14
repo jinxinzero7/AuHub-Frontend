@@ -120,8 +120,10 @@ Current verified state:
 - fonts are CSS system stacks defined in `src/app/globals.css`;
 - home/header/lot cards now use an accessible mass-marketplace direction instead of the old gold/luxury auction-house look;
 - login/register, lot creation and lot detail were redesigned in the same mass-marketplace direction;
+- profile/wallet/admin screens were refreshed for MVP demo flow with loading/empty/error states and visible action feedback;
 - layout has a skip link, stable `main-content` targets on key pages and global `focus-visible` styles;
 - bid placement sends a frontend-generated `idempotencyKey`;
+- lot detail exposes delivery confirmation and dispute opening actions for the winning buyer;
 - separate frontend CI workflow exists in `.github/workflows/ci.yml` and runs install, lint, build and Playwright smoke tests;
 - desktop and 390px mobile visual checks passed for the refreshed public/home flow, with no horizontal overflow observed;
 - seller-facing lot creation/detail/profile screens show payout after the 1% service fee;

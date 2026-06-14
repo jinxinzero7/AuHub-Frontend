@@ -116,6 +116,10 @@ export default function LotDetailClient({
   const [shippingTrackingNumber, setShippingTrackingNumber] = useState("");
   const [shippingError, setShippingError] = useState<string | null>(null);
   const [isShipping, setIsShipping] = useState(false);
+  const [dealActionError, setDealActionError] = useState<string | null>(null);
+  const [isConfirmingDelivery, setIsConfirmingDelivery] = useState(false);
+  const [disputeReason, setDisputeReason] = useState("");
+  const [isOpeningDispute, setIsOpeningDispute] = useState(false);
   const [sellerReviews, setSellerReviews] = useState<SellerReviewsResponse | null>(null);
   const [sellerTrust, setSellerTrust] = useState<SellerTrustScoreResponse | null>(null);
   const [sellerProfile, setSellerProfile] = useState<PublicUserProfileResponse | null>(null);
@@ -264,6 +268,41 @@ export default function LotDetailClient({
     }
   }, [lotId, shippingTrackingNumber]);
 
+  const handleConfirmDelivery = useCallback(async () => {
+    setDealActionError(null);
+    setIsConfirmingDelivery(true);
+    try {
+      await api.post(`/api/lots/${lotId}/confirm-delivery`);
+      window.location.reload();
+    } catch (err) {
+      console.error("Failed to confirm delivery:", err);
+      setDealActionError("Не удалось подтвердить доставку");
+    } finally {
+      setIsConfirmingDelivery(false);
+    }
+  }, [lotId]);
+
+  const handleOpenDispute = useCallback(async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setDealActionError(null);
+
+    if (!disputeReason.trim()) {
+      setDealActionError("Укажите причину спора");
+      return;
+    }
+
+    setIsOpeningDispute(true);
+    try {
+      await api.post(`/api/lots/${lotId}/dispute`, { reason: disputeReason.trim() });
+      window.location.reload();
+    } catch (err) {
+      console.error("Failed to open dispute:", err);
+      setDealActionError("Не удалось открыть спор");
+    } finally {
+      setIsOpeningDispute(false);
+    }
+  }, [disputeReason, lotId]);
+
   const handleCreateReview = useCallback(async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setReviewError(null);
@@ -296,6 +335,8 @@ export default function LotDetailClient({
   const canRequestDelivery = user?.id === winnerId && status === "DeliveryRequestPending" && !isDeliveryDeadlineExpired;
   const canShipLot = isSeller && status === "ShippingPending";
   const canEditLot = isSeller && (status === "Draft" || status === "Rejected");
+  const canConfirmDelivery = user?.id === winnerId && status === "Shipped";
+  const canOpenDispute = user?.id === winnerId && ["Completed", "DeliveryRequestPending", "ShippingPending", "Shipped", "Delivered"].includes(status);
   const serviceFee = calculateServiceFee(currentPrice);
   const sellerPayout = calculateSellerPayout(currentPrice);
   const existingReview = sellerReviews?.reviews.find((review) => review.lotId === lotId);
@@ -552,6 +593,52 @@ export default function LotDetailClient({
           <section className="rounded-[8px] border border-border bg-surface p-5 sm:p-6">
             <div className="text-[12px] font-medium text-text2">Отправление</div>
             <div className="mt-1 text-[14px] font-medium text-text">{trackingNumber}</div>
+          </section>
+        )}
+
+        {(canConfirmDelivery || canOpenDispute) && (
+          <section className="rounded-[8px] border border-border bg-surface p-5 sm:p-6">
+            <h2 className="text-[18px] font-semibold text-text">Действия по сделке</h2>
+            <p className="mt-1 text-[13px] leading-5 text-text2">
+              Подтверждение доставки завершит сделку и переведёт выплату продавцу. Если с товаром проблема, откройте спор.
+            </p>
+
+            {canConfirmDelivery && (
+              <button
+                type="button"
+                onClick={handleConfirmDelivery}
+                disabled={isConfirmingDelivery}
+                className="mt-4 w-full rounded-[7px] bg-green-600 py-2.5 text-[14px] font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isConfirmingDelivery ? "Подтверждаем..." : "Подтвердить получение"}
+              </button>
+            )}
+
+            {canOpenDispute && (
+              <form onSubmit={handleOpenDispute} className="mt-4 space-y-3">
+                <label className="block">
+                  <span className="mb-1 block text-[12px] font-medium text-text2">Причина спора</span>
+                  <textarea
+                    value={disputeReason}
+                    onChange={(event) => setDisputeReason(event.target.value)}
+                    rows={3}
+                    className="w-full resize-none rounded-[7px] border border-border bg-bg2 px-3 py-2 text-[13px] text-text outline-none focus:border-gold"
+                    placeholder="Например: товар не соответствует описанию"
+                  />
+                </label>
+                <button
+                  type="submit"
+                  disabled={isOpeningDispute}
+                  className="w-full rounded-[7px] border border-danger py-2.5 text-[14px] font-medium text-danger transition-colors hover:bg-danger-bg disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isOpeningDispute ? "Открываем..." : "Открыть спор"}
+                </button>
+              </form>
+            )}
+
+            <div className="mt-3" aria-live="polite">
+              {dealActionError && <div className="text-[12px] text-danger">{dealActionError}</div>}
+            </div>
           </section>
         )}
 

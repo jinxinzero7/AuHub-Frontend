@@ -1,7 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import api from "@/lib/api";
+import { API_ENDPOINTS } from "@/lib/constants";
+import { getApiErrorMessage } from "@/lib/errors";
+import { formatPrice } from "@/lib/utils";
+import { Alert, EmptyState, LoadingState, PageHeader } from "@/components/UiState";
 
 interface LotItem {
   id: string;
@@ -14,12 +19,16 @@ interface LotItem {
 export default function FrozenPage() {
   const [lots, setLots] = useState<LotItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [processingId, setProcessingId] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchLots = () => {
     setLoading(true);
-    api.get("/api/admin/lots/frozen")
+    setError(null);
+    api.get(API_ENDPOINTS.ADMIN.FROZEN_LOTS)
       .then((res) => setLots(Array.isArray(res.data) ? res.data : []))
-      .catch((err) => console.error("Failed to fetch frozen lots:", err))
+      .catch((err) => setError(getApiErrorMessage(err, "Не удалось загрузить frozen lots")))
       .finally(() => setLoading(false));
   };
 
@@ -27,38 +36,57 @@ export default function FrozenPage() {
     void Promise.resolve().then(fetchLots);
   }, []);
 
-  const unfreeze = async (id: string) => {
+  const unfreeze = async (lot: LotItem) => {
+    setProcessingId(lot.id);
+    setError(null);
+    setMessage(null);
     try {
-      await api.post(`/api/lots/${id}/unfreeze`);
-      setLots((prev) => prev.filter((l) => l.id !== id));
+      await api.post(API_ENDPOINTS.LOTS.UNFREEZE(lot.id));
+      setLots((prev) => prev.filter((item) => item.id !== lot.id));
+      setMessage(`Лот «${lot.title}» разморожен`);
     } catch (err) {
-      console.error(`Failed to unfreeze lot ${id}:`, err);
+      setError(getApiErrorMessage(err, "Не удалось разморозить лот"));
+    } finally {
+      setProcessingId(null);
     }
   };
 
-  if (loading) return <div className="text-center py-12 text-text3 text-[13px]">Загрузка...</div>;
-
-  if (lots.length === 0) return <div className="text-center py-12 text-text3 text-[13px]">Нет замороженных лотов</div>;
+  if (loading) return <LoadingState />;
 
   return (
     <div>
-      <h1 className="font-heading text-[24px] font-semibold text-text mb-6">Замороженные лоты</h1>
-      <div className="space-y-2">
-        {lots.map((lot) => (
-          <div key={lot.id} className="bg-surface border border-border rounded-[10px] p-4 flex items-center justify-between">
-            <div>
-              <div className="text-[14px] font-medium text-text">{lot.title}</div>
-              <div className="text-[12px] text-text2">{lot.currentPrice ?? lot.startingPrice} ₽</div>
-            </div>
-            <button
-              onClick={() => unfreeze(lot.id)}
-              className="px-4 py-1.5 rounded-[7px] border-none bg-gold text-[#FFF8E8] text-[13px] font-medium font-ui hover:bg-gold-hover transition-colors"
-            >
-              Разморозить
-            </button>
-          </div>
-        ))}
+      <PageHeader title="Frozen lots" description="Список лотов, временно остановленных администратором." />
+
+      <div className="mb-4 space-y-2" aria-live="polite">
+        {message && <Alert tone="success">{message}</Alert>}
+        {error && <Alert>{error}</Alert>}
       </div>
+
+      {lots.length === 0 ? (
+        <EmptyState title="Нет frozen lots" description="Когда активный лот будет заморожен, он появится здесь." />
+      ) : (
+        <div className="space-y-2">
+          {lots.map((lot) => (
+            <article key={lot.id} className="flex flex-col gap-3 rounded-[8px] border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <Link href={`/lots/${lot.id}`} className="text-[15px] font-semibold text-text hover:text-gold">
+                  {lot.title}
+                </Link>
+                <div className="mt-1 text-[12px] text-text2">
+                  Цена: {formatPrice(lot.currentPrice ?? lot.startingPrice)} ₽
+                </div>
+              </div>
+              <button
+                onClick={() => unfreeze(lot)}
+                disabled={processingId === lot.id}
+                className="rounded-[7px] bg-gold px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-gold-hover disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {processingId === lot.id ? "Обработка..." : "Разморозить"}
+              </button>
+            </article>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -3,18 +3,24 @@
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/constants";
+import { getApiErrorMessage } from "@/lib/errors";
 import type { DocumentVerificationRequest } from "@/types";
+import { Alert, EmptyState, LoadingState, PageHeader } from "@/components/UiState";
 
 export default function AdminDocumentsPage() {
   const [requests, setRequests] = useState<DocumentVerificationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [rejectReason, setRejectReason] = useState<Record<string, string>>({});
+  const [processingId, setProcessingId] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchRequests = () => {
     setLoading(true);
+    setError(null);
     api.get<DocumentVerificationRequest[]>(API_ENDPOINTS.ADMIN.DOCUMENT_VERIFICATION_PENDING)
       .then((response) => setRequests(Array.isArray(response.data) ? response.data : []))
-      .catch((err) => console.error("Failed to fetch document verification requests:", err))
+      .catch((err) => setError(getApiErrorMessage(err, "Не удалось загрузить заявки на проверку документов")))
       .finally(() => setLoading(false));
   };
 
@@ -22,28 +28,44 @@ export default function AdminDocumentsPage() {
     void Promise.resolve().then(fetchRequests);
   }, []);
 
-  const approve = async (id: string) => {
+  const approve = async (request: DocumentVerificationRequest) => {
+    setProcessingId(request.id);
+    setError(null);
+    setMessage(null);
     try {
-      await api.post(API_ENDPOINTS.ADMIN.DOCUMENT_VERIFICATION_APPROVE(id));
-      setRequests((prev) => prev.filter((request) => request.id !== id));
+      await api.post(API_ENDPOINTS.ADMIN.DOCUMENT_VERIFICATION_APPROVE(request.id));
+      setRequests((prev) => prev.filter((item) => item.id !== request.id));
+      setMessage(`Заявка ${request.id.slice(0, 8)} одобрена`);
     } catch (err) {
-      console.error(`Failed to approve document verification request ${id}:`, err);
+      setError(getApiErrorMessage(err, "Не удалось одобрить заявку"));
+    } finally {
+      setProcessingId(null);
     }
   };
 
-  const reject = async (id: string) => {
-    const reason = rejectReason[id]?.trim();
-    if (!reason) return;
+  const reject = async (request: DocumentVerificationRequest) => {
+    const reason = rejectReason[request.id]?.trim();
+    if (!reason) {
+      setError("Укажите причину отказа");
+      return;
+    }
 
+    setProcessingId(request.id);
+    setError(null);
+    setMessage(null);
     try {
-      await api.post(API_ENDPOINTS.ADMIN.DOCUMENT_VERIFICATION_REJECT(id), { reason });
-      setRequests((prev) => prev.filter((request) => request.id !== id));
+      await api.post(API_ENDPOINTS.ADMIN.DOCUMENT_VERIFICATION_REJECT(request.id), { reason });
+      setRequests((prev) => prev.filter((item) => item.id !== request.id));
+      setMessage(`Заявка ${request.id.slice(0, 8)} отклонена`);
     } catch (err) {
-      console.error(`Failed to reject document verification request ${id}:`, err);
+      setError(getApiErrorMessage(err, "Не удалось отклонить заявку"));
+    } finally {
+      setProcessingId(null);
     }
   };
 
   const openDocumentFile = async (id: string, fileType: "passport" | "selfie") => {
+    setError(null);
     try {
       const response = await api.get(API_ENDPOINTS.ADMIN.DOCUMENT_VERIFICATION_FILE(id, fileType), {
         responseType: "blob",
@@ -52,75 +74,80 @@ export default function AdminDocumentsPage() {
       window.open(url, "_blank", "noopener,noreferrer");
       window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch (err) {
-      console.error(`Failed to open document verification file ${id}/${fileType}:`, err);
+      setError(getApiErrorMessage(err, "Не удалось открыть файл документа"));
     }
   };
 
-  if (loading) {
-    return <div className="text-center py-12 text-text3 text-[13px]">Загрузка...</div>;
-  }
+  if (loading) return <LoadingState />;
 
   return (
     <div>
-      <h1 className="font-heading text-[24px] font-semibold text-text mb-6">Проверка документов</h1>
+      <PageHeader
+        title="Проверка документов"
+        description="Админ видит только приватные файлы заявки. После отказа пользователь остаётся unverified и может отправить новую заявку."
+      />
+
+      <div className="mb-4 space-y-2" aria-live="polite">
+        {message && <Alert tone="success">{message}</Alert>}
+        {error && <Alert>{error}</Alert>}
+      </div>
 
       {requests.length === 0 ? (
-        <div className="text-center py-12 text-text3 text-[13px]">Нет заявок на проверку</div>
+        <EmptyState title="Нет заявок на проверку" description="Новые заявки появятся после загрузки паспорта и селфи пользователем." />
       ) : (
         <div className="space-y-3">
           {requests.map((request) => (
-            <div key={request.id} className="bg-surface border border-border rounded-[10px] p-5">
-              <div className="flex flex-col gap-2 mb-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-[14px] font-medium text-text">Заявка {request.id.slice(0, 8)}</div>
-                  <div className="text-[12px] text-text3">
-                    {new Date(request.createdAt).toLocaleDateString("ru-RU")}
-                  </div>
+            <article key={request.id} className="rounded-[8px] border border-border bg-surface p-5">
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <h2 className="text-[16px] font-semibold text-text">Заявка {request.id.slice(0, 8)}</h2>
+                  <span className="text-[12px] text-text3">{new Date(request.createdAt).toLocaleDateString("ru-RU")}</span>
                 </div>
-                <div className="text-[12px] text-text2 break-all">User ID: {request.userId}</div>
-                <div className="text-[12px] text-text2 break-all">Паспорт: {request.passportImagePath}</div>
-                <div className="text-[12px] text-text2 break-all">Селфи: {request.selfieImagePath}</div>
+                <div className="break-all text-[12px] text-text2">User ID: {request.userId}</div>
+                <div className="break-all text-[12px] text-text2">Паспорт: {request.passportImagePath}</div>
+                <div className="break-all text-[12px] text-text2">Селфи: {request.selfieImagePath}</div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-2 mb-4">
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                 <button
                   type="button"
                   onClick={() => openDocumentFile(request.id, "passport")}
-                  className="w-full sm:w-auto px-4 py-2 rounded-[7px] border border-border text-text text-[13px] font-medium font-ui hover:border-gold transition-colors"
+                  className="rounded-[7px] border border-border px-4 py-2 text-[13px] font-medium text-text transition-colors hover:border-gold"
                 >
                   Открыть паспорт
                 </button>
                 <button
                   type="button"
                   onClick={() => openDocumentFile(request.id, "selfie")}
-                  className="w-full sm:w-auto px-4 py-2 rounded-[7px] border border-border text-text text-[13px] font-medium font-ui hover:border-gold transition-colors"
+                  className="rounded-[7px] border border-border px-4 py-2 text-[13px] font-medium text-text transition-colors hover:border-gold"
                 >
                   Открыть селфи
                 </button>
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <div className="mt-4 grid gap-2 sm:grid-cols-[auto_minmax(0,1fr)_auto]">
                 <button
-                  onClick={() => approve(request.id)}
-                  className="w-full sm:w-auto px-4 py-2 rounded-[7px] border-none bg-green-600 text-white text-[13px] font-medium font-ui hover:bg-green-700 transition-colors"
+                  onClick={() => approve(request)}
+                  disabled={processingId === request.id}
+                  className="rounded-[7px] bg-green-600 px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Одобрить
+                  {processingId === request.id ? "Обработка..." : "Одобрить"}
                 </button>
                 <input
                   value={rejectReason[request.id] ?? ""}
                   onChange={(e) => setRejectReason((prev) => ({ ...prev, [request.id]: e.target.value }))}
                   placeholder="Причина отказа"
-                  className="w-full min-w-0 flex-1 px-3 py-2 text-[13px] bg-bg2 border border-border rounded-[7px] text-text placeholder:text-text3 outline-none font-ui focus:border-gold"
+                  className="w-full rounded-[7px] border border-border bg-bg2 px-3 py-2 text-[13px] text-text outline-none placeholder:text-text3 focus:border-gold"
                 />
                 <button
-                  onClick={() => reject(request.id)}
-                  disabled={!rejectReason[request.id]?.trim()}
-                  className="w-full sm:w-auto px-4 py-2 rounded-[7px] border border-danger text-danger text-[13px] font-medium font-ui hover:bg-danger-bg transition-colors disabled:opacity-30"
+                  onClick={() => reject(request)}
+                  disabled={processingId === request.id || !rejectReason[request.id]?.trim()}
+                  className="rounded-[7px] border border-danger px-4 py-2 text-[13px] font-medium text-danger transition-colors hover:bg-danger-bg disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Отклонить
                 </button>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       )}

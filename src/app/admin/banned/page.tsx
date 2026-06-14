@@ -3,6 +3,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import api from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/constants";
+import { getApiErrorMessage } from "@/lib/errors";
+import { Alert, EmptyState, LoadingState, PageHeader } from "@/components/UiState";
 
 interface BannedUser {
   userId: string;
@@ -17,14 +19,17 @@ export default function BannedPage() {
   const [loading, setLoading] = useState(true);
   const [banUserId, setBanUserId] = useState("");
   const [banReason, setBanReason] = useState("");
-  const [banError, setBanError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [banning, setBanning] = useState(false);
+  const [unbanningId, setUnbanningId] = useState<string | null>(null);
 
   const fetchUsers = () => {
     setLoading(true);
+    setError(null);
     api.get(API_ENDPOINTS.ADMIN.BANNED_USERS)
       .then((res) => setUsers(Array.isArray(res.data) ? res.data : []))
-      .catch((err) => console.error("Failed to fetch banned users:", err))
+      .catch((err) => setError(getApiErrorMessage(err, "Не удалось загрузить забаненных пользователей")))
       .finally(() => setLoading(false));
   };
 
@@ -34,11 +39,12 @@ export default function BannedPage() {
 
   const ban = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setBanError(null);
+    setError(null);
+    setMessage(null);
 
     const userId = banUserId.trim();
     if (!userId) {
-      setBanError("Укажите ID пользователя");
+      setError("Укажите ID пользователя");
       return;
     }
 
@@ -49,91 +55,101 @@ export default function BannedPage() {
       });
       setBanUserId("");
       setBanReason("");
+      setMessage("Пользователь забанен");
       fetchUsers();
     } catch (err) {
-      console.error(`Failed to ban user ${userId}:`, err);
-      setBanError("Не удалось забанить пользователя");
+      setError(getApiErrorMessage(err, "Не удалось забанить пользователя"));
     } finally {
       setBanning(false);
     }
   };
 
-  const unban = async (userId: string) => {
+  const unban = async (user: BannedUser) => {
+    setUnbanningId(user.userId);
+    setError(null);
+    setMessage(null);
     try {
-      await api.post(API_ENDPOINTS.ADMIN.UNBAN(userId));
-      setUsers((prev) => prev.filter((u) => u.userId !== userId));
+      await api.post(API_ENDPOINTS.ADMIN.UNBAN(user.userId));
+      setUsers((prev) => prev.filter((item) => item.userId !== user.userId));
+      setMessage(`Пользователь ${user.email || user.userId} разбанен`);
     } catch (err) {
-      console.error(`Failed to unban user ${userId}:`, err);
+      setError(getApiErrorMessage(err, "Не удалось разбанить пользователя"));
+    } finally {
+      setUnbanningId(null);
     }
-  };
-
-  const renderUsers = () => {
-    if (loading) {
-      return <div className="text-center py-12 text-text3 text-[13px]">Загрузка...</div>;
-    }
-
-    if (users.length === 0) {
-      return <div className="text-center py-12 text-text3 text-[13px]">Нет забаненных пользователей</div>;
-    }
-
-    return (
-      <div className="space-y-2">
-        {users.map((u) => (
-          <div key={u.userId} className="bg-surface border border-border rounded-[10px] p-4">
-            <div className="flex items-center justify-between gap-4 mb-2">
-              <div className="min-w-0">
-                <div className="text-[14px] font-medium text-text truncate">{u.name}</div>
-                <div className="text-[12px] text-text2 truncate">{u.email}</div>
-              </div>
-              <button
-                onClick={() => unban(u.userId)}
-                className="shrink-0 px-4 py-1.5 rounded-[7px] border-none bg-gold text-[#FFF8E8] text-[13px] font-medium font-ui hover:bg-gold-hover transition-colors"
-              >
-                Разбанить
-              </button>
-            </div>
-            <div className="text-[12px] text-text3">
-              Причина: {u.reason || "Не указана"} · {new Date(u.bannedAt).toLocaleDateString("ru-RU")}
-            </div>
-          </div>
-        ))}
-      </div>
-    );
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="font-heading text-[24px] font-semibold text-text">Пользователи</h1>
+    <div>
+      <PageHeader
+        title="Пользователи"
+        description="Бан блокирует вход пользователя и его действия на платформе. Для MVP бан выполняется по User ID."
+      />
 
-      <form onSubmit={ban} className="bg-surface border border-border rounded-[10px] p-5 space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3">
-          <input
-            value={banUserId}
-            onChange={(event) => setBanUserId(event.target.value)}
-            placeholder="ID пользователя"
-            className="w-full bg-bg2 border border-border rounded-[7px] px-3 py-2 text-[13px] text-text placeholder:text-text3 outline-none focus:border-gold"
-          />
-          <input
-            value={banReason}
-            onChange={(event) => setBanReason(event.target.value)}
-            placeholder="Причина"
-            className="w-full bg-bg2 border border-border rounded-[7px] px-3 py-2 text-[13px] text-text placeholder:text-text3 outline-none focus:border-gold"
-          />
+      <div className="mb-4 space-y-2" aria-live="polite">
+        {message && <Alert tone="success">{message}</Alert>}
+        {error && <Alert>{error}</Alert>}
+      </div>
+
+      <form onSubmit={ban} className="mb-6 rounded-[8px] border border-border bg-surface p-5">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+          <label className="block">
+            <span className="mb-1 block text-[12px] font-medium text-text2">User ID</span>
+            <input
+              value={banUserId}
+              onChange={(event) => setBanUserId(event.target.value)}
+              placeholder="GUID пользователя"
+              className="w-full rounded-[7px] border border-border bg-bg2 px-3 py-2 text-[13px] text-text outline-none placeholder:text-text3 focus:border-gold"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-[12px] font-medium text-text2">Причина</span>
+            <input
+              value={banReason}
+              onChange={(event) => setBanReason(event.target.value)}
+              placeholder="Например: мошеннические действия"
+              className="w-full rounded-[7px] border border-border bg-bg2 px-3 py-2 text-[13px] text-text outline-none placeholder:text-text3 focus:border-gold"
+            />
+          </label>
           <button
             type="submit"
             disabled={banning}
-            className="px-4 py-2 rounded-[7px] border-none bg-danger text-white text-[13px] font-medium font-ui hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="self-end rounded-[7px] bg-danger px-4 py-2 text-[13px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {banning ? "Бан..." : "Забанить"}
           </button>
         </div>
-        {banError && <div className="text-[12px] text-danger">{banError}</div>}
       </form>
 
-      <div>
-        <h2 className="font-heading text-[18px] font-medium text-text mb-3">Забаненные пользователи</h2>
-        {renderUsers()}
-      </div>
+      {loading ? (
+        <LoadingState />
+      ) : users.length === 0 ? (
+        <EmptyState title="Нет забаненных пользователей" description="Забаненные аккаунты появятся в этом списке." />
+      ) : (
+        <div className="space-y-2">
+          {users.map((user) => (
+            <article key={user.userId} className="rounded-[8px] border border-border bg-surface p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <div className="truncate text-[15px] font-semibold text-text">{user.name || "Без имени"}</div>
+                  <div className="truncate text-[13px] text-text2">{user.email}</div>
+                  <div className="mt-2 break-all text-[12px] text-text3">ID: {user.userId}</div>
+                  <div className="mt-1 text-[12px] text-text3">
+                    Причина: {user.reason || "не указана"} · {new Date(user.bannedAt).toLocaleDateString("ru-RU")}
+                  </div>
+                </div>
+                <button
+                  onClick={() => unban(user)}
+                  disabled={unbanningId === user.userId}
+                  className="rounded-[7px] bg-gold px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-gold-hover disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {unbanningId === user.userId ? "Обработка..." : "Разбанить"}
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
