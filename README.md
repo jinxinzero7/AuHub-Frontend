@@ -158,6 +158,7 @@ npm run test:e2e -- e2e/full-stack-marketplace.spec.ts
 ```
 
 The full-stack spec currently covers seller registration, lot creation/submission, admin approval, buyer top-up and buyer bid through the UI.
+Detailed E2E setup and manual fallback checklist live in `docs/e2e.md`.
 
 ---
 
