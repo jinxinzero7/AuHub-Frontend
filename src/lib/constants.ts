@@ -32,6 +32,7 @@ export const API_ENDPOINTS = {
     CREATE: '/api/lots',
     UPDATE: (id: string) => `/api/lots/${id}`,
     SUBMIT_FOR_MODERATION: (id: string) => `/api/lots/${id}/submit-for-moderation`,
+    DEMO_COMPLETE: (id: string) => `/api/lots/${id}/demo-complete`,
     APPROVE: (id: string) => `/api/lots/${id}/approve`,
     REJECT: (id: string) => `/api/lots/${id}/reject`,
     UNFREEZE: (id: string) => `/api/lots/${id}/unfreeze`,

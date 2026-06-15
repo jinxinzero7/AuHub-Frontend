@@ -127,6 +127,8 @@ export default function LotDetailClient({
   const [reviewComment, setReviewComment] = useState("");
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [demoCompleteError, setDemoCompleteError] = useState<string | null>(null);
+  const [isDemoCompleting, setIsDemoCompleting] = useState(false);
 
   const handleNewBid = useCallback((message: { lotId: string; currentPrice: number; bidderName: string }) => {
     setCurrentPrice(message.currentPrice);
@@ -211,6 +213,20 @@ export default function LotDetailClient({
       console.error("Failed to submit lot for moderation:", err);
       setNewBidNotification("Не удалось отправить лот на модерацию");
       setTimeout(() => setNewBidNotification(null), 3000);
+    }
+  }, [lotId]);
+
+  const handleDemoComplete = useCallback(async () => {
+    setDemoCompleteError(null);
+    setIsDemoCompleting(true);
+    try {
+      await api.post(API_ENDPOINTS.LOTS.DEMO_COMPLETE(lotId));
+      window.location.reload();
+    } catch (err) {
+      console.error("Failed to demo-complete lot:", err);
+      setDemoCompleteError("Не удалось завершить лот для демо. Проверьте, что лот активен и у покупателя хватает замороженных средств.");
+    } finally {
+      setIsDemoCompleting(false);
     }
   }, [lotId]);
 
@@ -335,6 +351,7 @@ export default function LotDetailClient({
   const canRequestDelivery = user?.id === winnerId && status === "DeliveryRequestPending" && !isDeliveryDeadlineExpired;
   const canShipLot = isSeller && status === "ShippingPending";
   const canEditLot = isSeller && (status === "Draft" || status === "Rejected");
+  const canDemoComplete = isSeller && status === "Active";
   const canConfirmDelivery = user?.id === winnerId && status === "Shipped";
   const canOpenDispute = user?.id === winnerId && ["Completed", "DeliveryRequestPending", "ShippingPending", "Shipped", "Delivered"].includes(status);
   const serviceFee = calculateServiceFee(currentPrice);
@@ -444,6 +461,26 @@ export default function LotDetailClient({
                   <span>С учётом комиссии вы получите</span>
                   <span>{formatPrice(sellerPayout)} ₽</span>
                 </div>
+                {canDemoComplete && (
+                  <div className="mt-4 border-t border-border pt-4">
+                    <button
+                      type="button"
+                      onClick={handleDemoComplete}
+                      disabled={isDemoCompleting}
+                      className="w-full rounded-[7px] border border-blue-200 bg-blue-50 py-2.5 text-[13px] font-medium text-blue-700 transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isDemoCompleting ? "Завершаем..." : "Завершить лот для демо"}
+                    </button>
+                    <p className="mt-2 text-[12px] leading-5 text-text3">
+                      Для показа: завершает активный аукцион сейчас и открывает победителю форму доставки.
+                    </p>
+                    {demoCompleteError && (
+                      <div className="mt-2 text-[12px] text-danger" aria-live="polite">
+                        {demoCompleteError}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
