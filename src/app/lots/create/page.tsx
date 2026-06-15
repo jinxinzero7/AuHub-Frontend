@@ -23,7 +23,7 @@ const DELIVERY_PROVIDERS = [
 ];
 
 export default function CreateLotPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -49,6 +49,28 @@ export default function CreateLotPage() {
               className="mt-5 inline-flex rounded-[7px] bg-gold px-4 py-2.5 text-[14px] font-medium text-white hover:bg-gold-hover"
             >
               Войти
+            </Link>
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  if (user?.role === 1) {
+    return (
+      <>
+        <Header />
+        <main id="main-content" className="flex min-h-screen items-center justify-center bg-bg px-4">
+          <div className="max-w-[460px] rounded-[8px] border border-border bg-surface p-6 text-center">
+            <h1 className="text-[24px] font-semibold text-text">Создание лотов недоступно администратору</h1>
+            <p className="mt-2 text-[14px] leading-6 text-text2">
+              Администратор выступает сотрудником платформы: модерирует лоты, пользователей, документы и спорные ситуации. Создание лотов доступно только обычным пользователям.
+            </p>
+            <Link
+              href="/admin"
+              className="mt-5 inline-flex rounded-[7px] bg-gold px-4 py-2.5 text-[14px] font-medium text-white hover:bg-gold-hover"
+            >
+              Перейти в админ-раздел
             </Link>
           </div>
         </main>

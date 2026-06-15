@@ -13,6 +13,7 @@ export default function Header() {
   const { theme, toggleTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
+  const isAdmin = user?.role === 1;
 
   const handleSearch = () => {
     const q = searchQuery.trim();
@@ -57,7 +58,7 @@ export default function Header() {
             />
           </div>
 
-          {isAuthenticated && (
+          {isAuthenticated && !isAdmin && (
             <Link
               href="/lots/create"
               className="hidden md:inline-flex items-center gap-1.5 text-[13px] font-medium px-3.5 py-2 rounded-[8px] border border-gold bg-gold text-white hover:bg-gold-hover transition-colors"

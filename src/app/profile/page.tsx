@@ -351,7 +351,8 @@ export default function ProfilePage() {
     );
   }
 
-  const tabs: { key: Tab; label: string }[] = [
+  const isAdmin = user.role === 1;
+  const tabs: { key: Tab; label: string }[] = isAdmin ? [] : [
     { key: "lots", label: "Лоты" },
     { key: "bids", label: "Ставки" },
     { key: "wins", label: "Выигрыши" },
@@ -393,34 +394,51 @@ export default function ProfilePage() {
             </div>
           </section>
 
-          <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-            <div className="space-y-5">
-              <VerificationControls user={user} refreshSession={refreshSession} />
-              <DocumentVerificationControls user={user} refreshSession={refreshSession} />
-            </div>
-            <SellerRatingBlock userId={user.id} />
-          </div>
-
-          <div className="mt-6 flex gap-2 overflow-x-auto rounded-[8px] border border-border bg-surface p-2">
-            {tabs.map((item) => (
-              <button
-                key={item.key}
-                onClick={() => setTab(item.key)}
-                className={`whitespace-nowrap rounded-[7px] px-4 py-2 text-[13px] font-medium transition-colors ${
-                  tab === item.key ? "bg-gold text-white" : "text-text2 hover:bg-bg2 hover:text-text"
-                }`}
+          {isAdmin ? (
+            <section className="mt-5 rounded-[8px] border border-border bg-surface p-5 sm:p-6">
+              <h2 className="text-[18px] font-semibold text-text">Админский аккаунт</h2>
+              <p className="mt-2 text-[14px] leading-6 text-text2">
+                Этот профиль используется для операционной работы платформы. Пополнение баланса, ставки, выигрыши и создание лотов доступны только обычным пользователям.
+              </p>
+              <Link
+                href="/admin"
+                className="mt-4 inline-flex rounded-[7px] bg-gold px-4 py-2.5 text-[14px] font-medium text-white hover:bg-gold-hover"
               >
-                {item.label}
-              </button>
-            ))}
-          </div>
+                Открыть админ-раздел
+              </Link>
+            </section>
+          ) : (
+            <>
+              <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+                <div className="space-y-5">
+                  <VerificationControls user={user} refreshSession={refreshSession} />
+                  <DocumentVerificationControls user={user} refreshSession={refreshSession} />
+                </div>
+                <SellerRatingBlock userId={user.id} />
+              </div>
 
-          <div className="mt-5">
-            {tab === "lots" && <MyLotsTab userId={user.id} />}
-            {tab === "bids" && <MyBidsTab />}
-            {tab === "wins" && <MyWinsTab userId={user.id} />}
-            {tab === "balance" && <BalanceTab />}
-          </div>
+              <div className="mt-6 flex gap-2 overflow-x-auto rounded-[8px] border border-border bg-surface p-2">
+                {tabs.map((item) => (
+                  <button
+                    key={item.key}
+                    onClick={() => setTab(item.key)}
+                    className={`whitespace-nowrap rounded-[7px] px-4 py-2 text-[13px] font-medium transition-colors ${
+                      tab === item.key ? "bg-gold text-white" : "text-text2 hover:bg-bg2 hover:text-text"
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-5">
+                {tab === "lots" && <MyLotsTab userId={user.id} />}
+                {tab === "bids" && <MyBidsTab />}
+                {tab === "wins" && <MyWinsTab userId={user.id} />}
+                {tab === "balance" && <BalanceTab />}
+              </div>
+            </>
+          )}
         </div>
       </main>
     </>

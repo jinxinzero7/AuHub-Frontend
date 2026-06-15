@@ -5,9 +5,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Plus } from "lucide-react";
 
 export default function CreateDraftButton() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
-  if (!isAuthenticated) return null;
+  if (!isAuthenticated || user?.role === 1) return null;
 
   return (
     <Link

@@ -82,6 +82,23 @@ export default function BidForm({ lotId, currentPrice, sellerId, onBidPlaced }: 
     );
   }
 
+  if (user?.role === 1) {
+    return (
+      <section className="rounded-[8px] border border-border bg-surface p-5">
+        <h2 className="text-[18px] font-semibold text-text">Участие в торгах</h2>
+        <p className="mt-2 text-[13px] leading-5 text-text2">
+          Администратор работает с модерацией и операционными разделами платформы. Ставки доступны только обычным пользователям.
+        </p>
+        <Link
+          href="/admin"
+          className="mt-4 inline-flex w-full items-center justify-center rounded-[7px] border border-border bg-bg2 px-4 py-2.5 text-[14px] font-medium text-text transition-colors hover:border-gold"
+        >
+          Перейти в админ-раздел
+        </Link>
+      </section>
+    );
+  }
+
   return (
     <section className="rounded-[8px] border border-border bg-surface p-5">
       <div className="mb-4 flex items-start justify-between gap-4">
