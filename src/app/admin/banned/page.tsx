@@ -83,7 +83,7 @@ export default function BannedPage() {
     <div>
       <PageHeader
         title="Пользователи"
-        description="Бан блокирует вход пользователя и его действия на платформе. Для MVP бан выполняется по User ID."
+        description="Бан блокирует вход пользователя и его действия на платформе. Для MVP бан выполняется по ID пользователя."
       />
 
       <div className="mb-4 space-y-2" aria-live="polite">
@@ -94,7 +94,7 @@ export default function BannedPage() {
       <form onSubmit={ban} className="mb-6 rounded-[8px] border border-border bg-surface p-5">
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
           <label className="block">
-            <span className="mb-1 block text-[12px] font-medium text-text2">User ID</span>
+            <span className="mb-1 block text-[12px] font-medium text-text2">ID пользователя</span>
             <input
               value={banUserId}
               onChange={(event) => setBanUserId(event.target.value)}

@@ -28,7 +28,7 @@ export default function FrozenPage() {
     setError(null);
     api.get(API_ENDPOINTS.ADMIN.FROZEN_LOTS)
       .then((res) => setLots(Array.isArray(res.data) ? res.data : []))
-      .catch((err) => setError(getApiErrorMessage(err, "Не удалось загрузить frozen lots")))
+      .catch((err) => setError(getApiErrorMessage(err, "Не удалось загрузить замороженные лоты")))
       .finally(() => setLoading(false));
   };
 
@@ -55,7 +55,7 @@ export default function FrozenPage() {
 
   return (
     <div>
-      <PageHeader title="Frozen lots" description="Список лотов, временно остановленных администратором." />
+      <PageHeader title="Замороженные лоты" description="Список лотов, временно остановленных администратором." />
 
       <div className="mb-4 space-y-2" aria-live="polite">
         {message && <Alert tone="success">{message}</Alert>}
@@ -63,7 +63,7 @@ export default function FrozenPage() {
       </div>
 
       {lots.length === 0 ? (
-        <EmptyState title="Нет frozen lots" description="Когда активный лот будет заморожен, он появится здесь." />
+        <EmptyState title="Нет замороженных лотов" description="Когда активный лот будет заморожен, он появится здесь." />
       ) : (
         <div className="space-y-2">
           {lots.map((lot) => (

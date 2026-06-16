@@ -84,7 +84,7 @@ export default function AdminDocumentsPage() {
     <div>
       <PageHeader
         title="Проверка документов"
-        description="Админ видит только приватные файлы заявки. После отказа пользователь остаётся unverified и может отправить новую заявку."
+        description="Админ видит только приватные файлы заявки. После отказа пользователь остаётся без подтверждения и может отправить новую заявку."
       />
 
       <div className="mb-4 space-y-2" aria-live="polite">
@@ -103,7 +103,7 @@ export default function AdminDocumentsPage() {
                   <h2 className="text-[16px] font-semibold text-text">Заявка {request.id.slice(0, 8)}</h2>
                   <span className="text-[12px] text-text3">{new Date(request.createdAt).toLocaleDateString("ru-RU")}</span>
                 </div>
-                <div className="break-all text-[12px] text-text2">User ID: {request.userId}</div>
+                <div className="break-all text-[12px] text-text2">ID пользователя: {request.userId}</div>
                 <div className="break-all text-[12px] text-text2">Паспорт: {request.passportImagePath}</div>
                 <div className="break-all text-[12px] text-text2">Селфи: {request.selfieImagePath}</div>
               </div>

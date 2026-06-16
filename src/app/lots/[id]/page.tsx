@@ -6,6 +6,7 @@ import type { Lot, Bid } from "@/types";
 import Link from "next/link";
 import type { Metadata, ResolvingMetadata } from "next";
 import { formatPrice } from "@/lib/utils";
+import { getLotStatusLabel } from "@/lib/labels";
 
 interface LotImage {
   id: string;
@@ -44,12 +45,7 @@ export async function generateMetadata(
   }
 
   const coverImage = images.length > 0 ? images[0].url : undefined;
-  const statusLabel =
-    lot.status === "Active" ? "Аукцион активен" :
-    lot.status === "Completed" ? "Аукцион завершён" :
-    lot.status === "CompletedNoWinner" ? "Аукцион завершён без победителя" :
-    lot.status === "PendingModeration" ? "Лот на модерации" :
-    lot.status === "Draft" ? "Черновик" : lot.status;
+  const statusLabel = getLotStatusLabel(lot.status);
 
   const title = `${lot.title} — Текущая ставка: ₽${formatPrice(lot.currentPrice)} | AuHub`;
   const description = `${statusLabel}. ${lot.description.slice(0, 150)}${lot.description.length > 150 ? "..." : ""}`;

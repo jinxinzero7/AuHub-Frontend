@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
+import { DELIVERY_PROVIDER_OPTIONS } from "@/lib/labels";
 import { calculateSellerPayout, calculateServiceFee, formatPrice } from "@/lib/utils";
 import { validateLotDescription, validateLotTitle, validateStartingPrice } from "@/lib/validation";
 
@@ -14,12 +15,6 @@ const DURATION_PRESETS = [
   { label: "48 часов", hours: 48 },
   { label: "72 часа", hours: 72 },
   { label: "7 дней", hours: 168 },
-];
-
-const DELIVERY_PROVIDERS = [
-  { value: "Cdek", label: "СДЭК" },
-  { value: "YandexDelivery", label: "Яндекс Доставка" },
-  { value: "RussianPost", label: "Почта России" },
 ];
 
 export default function CreateLotPage() {
@@ -248,7 +243,7 @@ export default function CreateLotPage() {
                   Службы доставки
                 </span>
                 <div className="grid gap-2 sm:grid-cols-3">
-                  {DELIVERY_PROVIDERS.map((provider) => (
+                  {DELIVERY_PROVIDER_OPTIONS.map((provider) => (
                     <label
                       key={provider.value}
                       className={`flex cursor-pointer items-center gap-2 rounded-[7px] border px-3 py-2.5 text-[13px] transition-colors ${

@@ -11,6 +11,7 @@ import ImageUpload from "@/components/ImageUpload";
 import { calculateSellerPayout, calculateServiceFee, formatDate, formatPrice } from "@/lib/utils";
 import api from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/constants";
+import { getDeliveryProviderLabel, getLotStatusLabel, getTrustBadgeLabel } from "@/lib/labels";
 import type { Bid, PublicUserProfileResponse, SellerReviewsResponse, SellerTrustScoreResponse } from "@/types";
 
 interface LotImage {
@@ -40,32 +41,6 @@ interface LotDetailClientProps {
   supportedDeliveryProviders: string[];
   initialBids: Bid[];
   initialImages: LotImage[];
-}
-
-const deliveryProviderLabels: Record<string, string> = {
-  Cdek: "СДЭК",
-  YandexDelivery: "Яндекс Доставка",
-  RussianPost: "Почта России",
-};
-
-const lotStatusLabels: Record<string, string> = {
-  Draft: "Черновик",
-  PendingModeration: "На модерации",
-  Active: "Активен",
-  Rejected: "Отклонён",
-  Cancelled: "Отменён",
-  Completed: "Завершён",
-  CompletedNoWinner: "Без победителя",
-  DeliveryRequestPending: "Ожидает доставку",
-  ShippingPending: "Ожидает отправку",
-  Shipped: "Отправлен",
-  Delivered: "Доставлен",
-  TransactionComplete: "Сделка завершена",
-  Disputed: "Спор",
-};
-
-function getStatusLabel(status: string) {
-  return lotStatusLabels[status] ?? status;
 }
 
 function statusClassName(status: string) {
@@ -394,7 +369,7 @@ export default function LotDetailClient({
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <span className={`inline-flex rounded-full border px-3 py-1 text-[12px] font-medium ${statusClassName(status)}`}>
-                  {getStatusLabel(status)}
+                  {getLotStatusLabel(status)}
                 </span>
                 <h1 className="mt-3 text-[28px] font-semibold leading-tight text-text">{title}</h1>
               </div>
@@ -444,7 +419,7 @@ export default function LotDetailClient({
                 <div className="flex flex-wrap gap-2">
                   {supportedDeliveryProviders.map((provider) => (
                     <span key={provider} className="rounded-full border border-border bg-bg2 px-3 py-1 text-[12px] text-text">
-                      {deliveryProviderLabels[provider] ?? provider}
+                      {getDeliveryProviderLabel(provider)}
                     </span>
                   ))}
                 </div>
@@ -512,7 +487,7 @@ export default function LotDetailClient({
             <div className="mt-4 rounded-[7px] border border-border bg-bg2 p-3 text-[13px]">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-text2">Надёжность продавца</span>
-                <span className="font-medium text-text">{sellerTrust.score}/100 · {sellerTrust.badge}</span>
+                <span className="font-medium text-text">{sellerTrust.score}/100 · {getTrustBadgeLabel(sellerTrust.badge)}</span>
               </div>
               <div className="mt-1 text-[12px] text-text3">
                 Успешных сделок: {sellerTrust.successfulSales}, проигранных споров: {sellerTrust.sellerLostDisputes}
@@ -545,7 +520,7 @@ export default function LotDetailClient({
                 >
                   {supportedDeliveryProviders.map((provider) => (
                     <option key={provider} value={provider}>
-                      {deliveryProviderLabels[provider] ?? provider}
+                      {getDeliveryProviderLabel(provider)}
                     </option>
                   ))}
                 </select>
@@ -600,7 +575,7 @@ export default function LotDetailClient({
             <h2 className="text-[18px] font-semibold text-text">Отправить лот</h2>
             <p className="mt-1 text-[13px] text-text2">
               Покупатель запросил доставку
-              {selectedDeliveryProvider ? ` через ${deliveryProviderLabels[selectedDeliveryProvider] ?? selectedDeliveryProvider}` : ""}.
+              {selectedDeliveryProvider ? ` через ${getDeliveryProviderLabel(selectedDeliveryProvider)}` : ""}.
             </p>
 
             <label className="mt-4 block">

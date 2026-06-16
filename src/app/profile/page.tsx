@@ -9,6 +9,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/constants";
 import { getApiErrorMessage } from "@/lib/errors";
+import {
+  getDocumentVerificationStatusLabel,
+  getLotStatusLabel,
+  getRoleLabel,
+  getTransactionEffectLabel,
+  getTransactionTypeLabel,
+  getTrustBadgeLabel,
+} from "@/lib/labels";
 import { calculateSellerPayout, formatDate, formatPrice } from "@/lib/utils";
 import type {
   BalanceResponse,
@@ -26,27 +34,6 @@ import type {
 } from "@/types";
 
 type Tab = "lots" | "bids" | "wins" | "balance";
-
-const lotStatusLabels: Record<string, string> = {
-  Draft: "Черновик",
-  PendingModeration: "На модерации",
-  Active: "Активен",
-  Rejected: "Отклонён",
-  Cancelled: "Отменён",
-  Completed: "Завершён",
-  CompletedNoWinner: "Без победителя",
-  DeliveryRequestPending: "Ожидает доставку",
-  ShippingPending: "Ожидает отправку",
-  Shipped: "Отправлен",
-  Delivered: "Доставлен",
-  TransactionComplete: "Сделка завершена",
-  Disputed: "Спор",
-  DeliveryRequestExpired: "Доставка не запрошена",
-};
-
-function lotStatusLabel(status: string) {
-  return lotStatusLabels[status] ?? status;
-}
 
 function statusClassName(status: string) {
   if (status === "Active" || status === "TransactionComplete") return "bg-green-100 text-green-700";
@@ -91,7 +78,7 @@ function SellerRatingBlock({ userId }: { userId: string }) {
         {trust && (
           <div className="rounded-[7px] border border-border bg-surface px-3 py-2 text-[13px]">
             <span className="text-text2">Надёжность: </span>
-            <span className="font-medium text-text">{trust.score}/100 · {trust.badge}</span>
+            <span className="font-medium text-text">{trust.score}/100 · {getTrustBadgeLabel(trust.badge)}</span>
           </div>
         )}
       </div>
@@ -275,7 +262,7 @@ function DocumentVerificationControls({ user, refreshSession }: { user: User; re
         <span className={`rounded-full px-3 py-1 text-[12px] font-medium ${
           isVerified ? "bg-green-100 text-green-700" : hasPendingRequest ? "bg-yellow-100 text-yellow-700" : "bg-gray-100 text-gray-700"
         }`}>
-          {isVerified ? "Verified" : hasPendingRequest ? "PendingReview" : "Unverified"}
+          {getDocumentVerificationStatusLabel(isVerified ? "Verified" : hasPendingRequest ? "PendingReview" : "Unverified")}
         </span>
       </div>
 
@@ -315,7 +302,7 @@ function DocumentVerificationControls({ user, refreshSession }: { user: User; re
           {requests.slice(0, 3).map((request) => (
             <div key={request.id} className="flex items-center justify-between gap-3 text-[12px]">
               <span className="text-text2">{new Date(request.createdAt).toLocaleDateString("ru-RU")}</span>
-              <span className="font-medium text-text">{request.status}</span>
+              <span className="font-medium text-text">{getDocumentVerificationStatusLabel(request.status)}</span>
             </div>
           ))}
         </div>
@@ -389,7 +376,7 @@ export default function ProfilePage() {
               <InfoRow label="Телефон" value={user.phoneNumber || "Не указан"} />
               <InfoRow label="Email подтверждён" value={user.isEmailVerified ? "Да" : "Нет"} tone={user.isEmailVerified ? "success" : "warning"} />
               <InfoRow label="Телефон подтверждён" value={user.isPhoneVerified ? "Да" : "Нет"} tone={user.isPhoneVerified ? "success" : "warning"} />
-              <InfoRow label="Роль" value={user.role === 1 ? "Администратор" : "Участник"} />
+              <InfoRow label="Роль" value={getRoleLabel(user.role)} />
               <InfoRow label="ID" value={user.id} mono />
             </div>
           </section>
@@ -494,7 +481,7 @@ function MyLotsTab({ userId }: { userId: string }) {
                 {lot.title}
               </Link>
               <div className="mt-2 flex flex-wrap gap-2 text-[12px] text-text2">
-                <span className={`rounded-full px-2 py-0.5 font-medium ${statusClassName(lot.status)}`}>{lotStatusLabel(lot.status)}</span>
+                <span className={`rounded-full px-2 py-0.5 font-medium ${statusClassName(lot.status)}`}>{getLotStatusLabel(lot.status)}</span>
                 <span>{formatPrice(lot.currentPrice ?? lot.startingPrice)} ₽</span>
                 <span>{lot.bidsCount ?? 0} ставок</span>
               </div>
@@ -539,7 +526,7 @@ function MyBidsTab() {
         <Link key={group.lotId} href={`/lots/${group.lotId}`} className="block rounded-[8px] border border-border bg-surface p-4 hover:border-gold">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="font-semibold text-text">{group.lotTitle}</div>
-            <span className="w-fit rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">{lotStatusLabel(group.lotStatus)}</span>
+            <span className="w-fit rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">{getLotStatusLabel(group.lotStatus)}</span>
           </div>
           <div className="mt-3 space-y-1">
             {group.bids.map((bid) => (
@@ -577,7 +564,7 @@ function MyWinsTab({ userId }: { userId: string }) {
         <Link key={lot.id} href={`/lots/${lot.id}`} className="block rounded-[8px] border border-border bg-surface p-4 hover:border-gold">
           <div className="font-semibold text-text">{lot.title}</div>
           <div className="mt-2 flex flex-wrap gap-2 text-[12px] text-text2">
-            <span className={`rounded-full px-2 py-0.5 font-medium ${statusClassName(lot.status)}`}>{lotStatusLabel(lot.status)}</span>
+            <span className={`rounded-full px-2 py-0.5 font-medium ${statusClassName(lot.status)}`}>{getLotStatusLabel(lot.status)}</span>
             <span>{formatPrice(lot.currentPrice ?? lot.startingPrice)} ₽</span>
           </div>
         </Link>
@@ -657,7 +644,7 @@ function BalanceTab() {
       window.open(response.data.paymentUrl, "_blank", "noopener,noreferrer");
       setMessage("Открыта демо-страница оплаты Robokassa");
     } catch (err) {
-      setError(getApiErrorMessage(err, "Не удалось создать Robokassa checkout"));
+      setError(getApiErrorMessage(err, "Не удалось создать оплату Robokassa"));
     } finally {
       setCheckoutLoading(false);
     }
@@ -694,7 +681,7 @@ function BalanceTab() {
             className="inline-flex items-center justify-center gap-1.5 rounded-[7px] bg-gold px-4 py-2 text-[13px] font-medium text-white hover:bg-gold-hover disabled:opacity-50"
           >
             <Plus className="h-3.5 w-3.5" />
-            {topUpLoading ? "Пополнение..." : "Demo top-up"}
+            {topUpLoading ? "Пополнение..." : "Демо-пополнение"}
           </button>
           <button
             onClick={handleProviderCheckout}
@@ -720,7 +707,10 @@ function BalanceTab() {
             {transactions.map((transaction) => (
               <div key={transaction.id} className="flex flex-col gap-1 border-b border-border py-2 last:border-0 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <div className="text-[13px] text-text">{transaction.description}</div>
+                  <div className="text-[13px] text-text">{transaction.description || getTransactionTypeLabel(transaction.type)}</div>
+                  {!transaction.description && (
+                    <div className="text-[12px] text-text3">{getTransactionEffectLabel(transaction.effect)}</div>
+                  )}
                   <div className="text-[12px] text-text3">{new Date(transaction.createdAt).toLocaleDateString("ru-RU")}</div>
                 </div>
                 <span className={`font-medium ${transaction.amount >= 0 ? "text-green-600" : "text-red-500"}`}>

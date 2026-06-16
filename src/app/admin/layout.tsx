@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const SIDEBAR_LINKS = [
   { href: "/admin/moderation", label: "Модерация" },
-  { href: "/admin/frozen", label: "Frozen" },
+  { href: "/admin/frozen", label: "Замороженные" },
   { href: "/admin/disputes", label: "Споры" },
   { href: "/admin/documents", label: "Документы" },
   { href: "/admin/banned", label: "Пользователи" },

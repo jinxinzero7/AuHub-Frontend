@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/constants";
 import { getApiErrorMessage } from "@/lib/errors";
+import { DELIVERY_PROVIDER_OPTIONS } from "@/lib/labels";
 import { calculateSellerPayout, calculateServiceFee, formatPrice } from "@/lib/utils";
 import { validateLotDescription, validateLotTitle, validateStartingPrice } from "@/lib/validation";
 import type { Lot } from "@/types";
@@ -18,12 +19,6 @@ const DURATION_PRESETS = [
   { label: "48 часов", hours: 48 },
   { label: "72 часа", hours: 72 },
   { label: "7 дней", hours: 168 },
-];
-
-const DELIVERY_PROVIDERS = [
-  { value: "Cdek", label: "СДЭК" },
-  { value: "YandexDelivery", label: "Яндекс Доставка" },
-  { value: "RussianPost", label: "Почта России" },
 ];
 
 export default function EditLotPage() {
@@ -250,7 +245,7 @@ export default function EditLotPage() {
               <div>
                 <span className="mb-2 block text-[13px] font-medium text-text2">Службы доставки</span>
                 <div className="grid gap-2 sm:grid-cols-3">
-                  {DELIVERY_PROVIDERS.map((provider) => (
+                  {DELIVERY_PROVIDER_OPTIONS.map((provider) => (
                     <label
                       key={provider.value}
                       className={`flex cursor-pointer items-center gap-2 rounded-[7px] border px-3 py-2.5 text-[13px] transition-colors ${

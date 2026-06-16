@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { formatPrice, getTimeRemaining, formatTime } from "@/lib/utils";
 import api from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/constants";
+import { getDeliveryProviderLabel, getLotStatusLabel, getTrustBadgeLabel } from "@/lib/labels";
 import type { PublicUserProfileResponse, SellerReviewsResponse, SellerTrustScoreResponse } from "@/types";
 
 interface LotCardProps {
@@ -24,24 +25,6 @@ interface LotCardProps {
     supportedDeliveryProviders?: string[];
   };
 }
-
-const deliveryProviderLabels: Record<string, string> = {
-  Cdek: "СДЭК",
-  YandexDelivery: "Яндекс",
-  RussianPost: "Почта",
-};
-
-const statusLabels: Record<string, string> = {
-  Active: "Идут торги",
-  Draft: "Черновик",
-  PendingModeration: "На модерации",
-  Completed: "Завершён",
-  CompletedNoWinner: "Без победителя",
-  DeliveryRequestPending: "Ожидает доставку",
-  ShippingPending: "К отправке",
-  Shipped: "Отправлен",
-  TransactionComplete: "Сделка закрыта",
-};
 
 const placeholderStyles = [
   "bg-[linear-gradient(135deg,#E0F2FE_0%,#F8FAFC_52%,#DCFCE7_100%)]",
@@ -100,7 +83,7 @@ export default function LotCard({ lot }: LotCardProps) {
   const isActive = lot.status === "Active";
   const hasCoverImage = !!lot.coverImageUrl;
   const placeholderClass = placeholderStyles[stableIndex(lot.id, placeholderStyles.length)];
-  const statusLabel = statusLabels[lot.status] ?? lot.status;
+  const statusLabel = getLotStatusLabel(lot.status);
   const hasReviews = !!sellerReviews && sellerReviews.reviewsCount > 0;
   const hasVerifiedDocs = sellerProfile?.documentVerificationStatus === "Verified";
 
@@ -188,13 +171,13 @@ export default function LotCard({ lot }: LotCardProps) {
         <div className="mt-3 flex flex-wrap gap-1.5">
           {sellerTrust && (
             <span className="inline-flex items-center rounded-[6px] bg-bg2 border border-border px-2 py-1 text-[11px] text-text2">
-              Надёжность {sellerTrust.score}/100
+              Надёжность {sellerTrust.score}/100 · {getTrustBadgeLabel(sellerTrust.badge)}
             </span>
           )}
           {lot.supportedDeliveryProviders?.map((provider) => (
             <span key={provider} className="inline-flex items-center gap-1 rounded-[6px] bg-bg2 border border-border px-2 py-1 text-[11px] text-text2">
               <Truck className="w-3 h-3" />
-              {deliveryProviderLabels[provider] ?? provider}
+              {getDeliveryProviderLabel(provider, true)}
             </span>
           ))}
         </div>

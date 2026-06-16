@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSignalR } from "@/hooks/useSignalR";
 import Header from "@/components/Header";
 import api from "@/lib/api";
+import { getNotificationTypeLabel } from "@/lib/labels";
 
 interface NotificationItem {
   id: string;
@@ -17,22 +18,6 @@ interface NotificationItem {
 }
 
 const PAGE_SIZE = 20;
-
-const TYPE_LABELS: Record<string, string> = {
-  NewBid: "Новая ставка",
-  WonAuction: "Вы выиграли",
-  LotApproved: "Лот одобрен",
-  LotRejected: "Лот отклонён",
-  LotFrozen: "Лот заморожен",
-  DisputeResolved: "Спор разрешён",
-  LotCompleted: "Аукцион завершён",
-  Outbid: "Ставка перебита",
-  AuctionEndingSoon: "Аукцион скоро закончится",
-};
-
-function getTypeLabel(type: string): string {
-  return TYPE_LABELS[type] ?? type;
-}
 
 export default function NotificationsPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -150,7 +135,7 @@ export default function NotificationsPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-[12px] text-text3 uppercase tracking-wider mb-1">
-                        {getTypeLabel(n.type)}
+                        {getNotificationTypeLabel(n.type)}
                       </div>
                       <div className="text-[14px] font-medium text-text mb-1">{n.title}</div>
                       <div className="text-[13px] text-text2">{n.message}</div>
