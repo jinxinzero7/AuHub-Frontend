@@ -112,6 +112,10 @@ export default async function LotDetailPage({
             endTime={lot.endTime}
             trackingNumber={lot.trackingNumber}
             selectedDeliveryProvider={lot.selectedDeliveryProvider}
+            deliveryAddress={lot.deliveryAddress}
+            deliveryRecipientName={lot.deliveryRecipientName}
+            deliveryRecipientPhone={lot.deliveryRecipientPhone}
+            deliveryRequestedAt={lot.deliveryRequestedAt}
             deliveryRequestDeadlineAt={lot.deliveryRequestDeadlineAt}
             currentTime={new Date().toISOString()}
             supportedDeliveryProviders={lot.supportedDeliveryProviders ?? []}

@@ -71,10 +71,13 @@ export interface Lot {
   updatedAt: string;
   bidsCount: number;
   coverImageUrl?: string;
-  trackingNumber?: string;
-  selectedDeliveryProvider?: string;
-  deliveryRequestedAt?: string;
-  deliveryRequestDeadlineAt?: string;
+  trackingNumber?: string | null;
+  selectedDeliveryProvider?: string | null;
+  deliveryAddress?: string | null;
+  deliveryRecipientName?: string | null;
+  deliveryRecipientPhone?: string | null;
+  deliveryRequestedAt?: string | null;
+  deliveryRequestDeadlineAt?: string | null;
   supportedDeliveryProviders: string[];
   adminComment?: string;
 }

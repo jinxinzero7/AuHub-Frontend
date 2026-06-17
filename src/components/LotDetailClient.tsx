@@ -12,7 +12,7 @@ import { calculateSellerPayout, calculateServiceFee, formatDate, formatPrice } f
 import api from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/constants";
 import { getDeliveryProviderLabel, getLotStatusLabel, getTrustBadgeLabel } from "@/lib/labels";
-import type { Bid, PublicUserProfileResponse, SellerReviewsResponse, SellerTrustScoreResponse } from "@/types";
+import type { Bid, Lot, PublicUserProfileResponse, SellerReviewsResponse, SellerTrustScoreResponse } from "@/types";
 
 interface LotImage {
   id: string;
@@ -34,13 +34,37 @@ interface LotDetailClientProps {
   status: string;
   startTime: string;
   endTime: string;
-  trackingNumber?: string;
-  selectedDeliveryProvider?: string;
-  deliveryRequestDeadlineAt?: string;
+  trackingNumber?: string | null;
+  selectedDeliveryProvider?: string | null;
+  deliveryAddress?: string | null;
+  deliveryRecipientName?: string | null;
+  deliveryRecipientPhone?: string | null;
+  deliveryRequestedAt?: string | null;
+  deliveryRequestDeadlineAt?: string | null;
   currentTime: string;
   supportedDeliveryProviders: string[];
   initialBids: Bid[];
   initialImages: LotImage[];
+}
+
+interface DeliveryRequestDetails {
+  selectedDeliveryProvider?: string | null;
+  deliveryAddress?: string | null;
+  deliveryRecipientName?: string | null;
+  deliveryRecipientPhone?: string | null;
+  deliveryRequestedAt?: string | null;
+  trackingNumber?: string | null;
+}
+
+function mapDeliveryRequestDetails(lot: Pick<Lot, "selectedDeliveryProvider" | "deliveryAddress" | "deliveryRecipientName" | "deliveryRecipientPhone" | "deliveryRequestedAt" | "trackingNumber">): DeliveryRequestDetails {
+  return {
+    selectedDeliveryProvider: lot.selectedDeliveryProvider,
+    deliveryAddress: lot.deliveryAddress,
+    deliveryRecipientName: lot.deliveryRecipientName,
+    deliveryRecipientPhone: lot.deliveryRecipientPhone,
+    deliveryRequestedAt: lot.deliveryRequestedAt,
+    trackingNumber: lot.trackingNumber,
+  };
 }
 
 function statusClassName(status: string) {
@@ -70,6 +94,10 @@ export default function LotDetailClient({
   endTime,
   trackingNumber,
   selectedDeliveryProvider,
+  deliveryAddress: initialDeliveryAddress,
+  deliveryRecipientName,
+  deliveryRecipientPhone,
+  deliveryRequestedAt,
   deliveryRequestDeadlineAt,
   currentTime,
   supportedDeliveryProviders,
@@ -77,15 +105,24 @@ export default function LotDetailClient({
   initialImages,
 }: LotDetailClientProps) {
   const { user } = useAuth();
+  const userId = user?.id;
   const isSeller = user?.id === sellerId;
   const [currentPrice, setCurrentPrice] = useState(initialCurrentPrice);
   const [bids, setBids] = useState<Bid[]>(initialBids);
   const [images, setImages] = useState<LotImage[]>(initialImages);
   const [newBidNotification, setNewBidNotification] = useState<string | null>(null);
   const [deliveryProvider, setDeliveryProvider] = useState(supportedDeliveryProviders[0] ?? "");
-  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [deliveryAddressInput, setDeliveryAddressInput] = useState("");
   const [recipientName, setRecipientName] = useState(user?.name ?? "");
   const [recipientPhone, setRecipientPhone] = useState("");
+  const [deliveryRequestDetails, setDeliveryRequestDetails] = useState<DeliveryRequestDetails>(() => ({
+    selectedDeliveryProvider,
+    deliveryAddress: initialDeliveryAddress,
+    deliveryRecipientName,
+    deliveryRecipientPhone,
+    deliveryRequestedAt,
+    trackingNumber,
+  }));
   const [deliveryError, setDeliveryError] = useState<string | null>(null);
   const [isRequestingDelivery, setIsRequestingDelivery] = useState(false);
   const [shippingTrackingNumber, setShippingTrackingNumber] = useState("");
@@ -180,6 +217,24 @@ export default function LotDetailClient({
     };
   }, [sellerId]);
 
+  useEffect(() => {
+    if (!userId) return;
+
+    let isMounted = true;
+    api.get<Lot>(API_ENDPOINTS.LOTS.DETAIL(lotId))
+      .then((response) => {
+        if (!isMounted) return;
+        setDeliveryRequestDetails(mapDeliveryRequestDetails(response.data));
+      })
+      .catch((err) => {
+        console.error("Failed to fetch private delivery details:", err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [lotId, userId]);
+
   const handleSubmitForModeration = useCallback(async () => {
     try {
       await api.post(`/api/lots/${lotId}/submit-for-moderation`);
@@ -214,7 +269,7 @@ export default function LotDetailClient({
       return;
     }
 
-    if (!deliveryAddress.trim() || !recipientName.trim() || !recipientPhone.trim()) {
+    if (!deliveryAddressInput.trim() || !recipientName.trim() || !recipientPhone.trim()) {
       setDeliveryError("Заполните данные для доставки");
       return;
     }
@@ -223,7 +278,7 @@ export default function LotDetailClient({
     try {
       await api.post(`/api/lots/${lotId}/delivery-request`, {
         provider: deliveryProvider,
-        address: deliveryAddress.trim(),
+        address: deliveryAddressInput.trim(),
         recipientName: recipientName.trim(),
         recipientPhone: recipientPhone.trim(),
       });
@@ -234,7 +289,7 @@ export default function LotDetailClient({
     } finally {
       setIsRequestingDelivery(false);
     }
-  }, [deliveryAddress, deliveryProvider, lotId, recipientName, recipientPhone]);
+  }, [deliveryAddressInput, deliveryProvider, lotId, recipientName, recipientPhone]);
 
   const handleShipLot = useCallback(async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -333,6 +388,27 @@ export default function LotDetailClient({
   const sellerPayout = calculateSellerPayout(currentPrice);
   const existingReview = sellerReviews?.reviews.find((review) => review.lotId === lotId);
   const canReviewSeller = sellerReviews !== null && user?.id === winnerId && status === "TransactionComplete" && !existingReview;
+  const deliveryDetailRows = [
+    deliveryRequestDetails.selectedDeliveryProvider?.trim()
+      ? { label: "Служба доставки", value: getDeliveryProviderLabel(deliveryRequestDetails.selectedDeliveryProvider) }
+      : null,
+    deliveryRequestDetails.deliveryAddress?.trim()
+      ? { label: "ПВЗ или адрес", value: deliveryRequestDetails.deliveryAddress.trim() }
+      : null,
+    deliveryRequestDetails.deliveryRecipientName?.trim()
+      ? { label: "Получатель", value: deliveryRequestDetails.deliveryRecipientName.trim() }
+      : null,
+    deliveryRequestDetails.deliveryRecipientPhone?.trim()
+      ? { label: "Телефон", value: deliveryRequestDetails.deliveryRecipientPhone.trim() }
+      : null,
+    deliveryRequestDetails.deliveryRequestedAt?.trim()
+      ? { label: "Запрошено", value: formatDate(deliveryRequestDetails.deliveryRequestedAt) }
+      : null,
+    deliveryRequestDetails.trackingNumber?.trim()
+      ? { label: "Отправление", value: deliveryRequestDetails.trackingNumber.trim() }
+      : null,
+  ].filter((row): row is { label: string; value: string } => row !== null);
+  const hasDeliveryRequestDetails = deliveryDetailRows.length > 0;
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -549,8 +625,8 @@ export default function LotDetailClient({
             <label className="mt-3 block">
               <span className="mb-1 block text-[12px] font-medium text-text2">ПВЗ или адрес</span>
               <textarea
-                value={deliveryAddress}
-                onChange={(event) => setDeliveryAddress(event.target.value)}
+                value={deliveryAddressInput}
+                onChange={(event) => setDeliveryAddressInput(event.target.value)}
                 rows={3}
                 className="w-full resize-none rounded-[7px] border border-border bg-bg2 px-3 py-2 text-[13px] text-text outline-none focus:border-gold"
               />
@@ -570,12 +646,39 @@ export default function LotDetailClient({
           </form>
         )}
 
+        {hasDeliveryRequestDetails && (
+          <section
+            aria-labelledby="delivery-details-heading"
+            className="rounded-[8px] border border-border bg-surface p-5 sm:p-6"
+          >
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 id="delivery-details-heading" className="text-[18px] font-semibold text-text">Данные доставки</h2>
+                <p className="mt-1 text-[13px] leading-5 text-text2">
+                  Информация доступна только участникам сделки и администраторам.
+                </p>
+              </div>
+              {deliveryRequestDeadlineAt && status === "DeliveryRequestPending" && (
+                <span className="text-[12px] text-text3">до {formatDate(deliveryRequestDeadlineAt)}</span>
+              )}
+            </div>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {deliveryDetailRows.map((row) => (
+                <div key={row.label} className="rounded-[7px] border border-border bg-bg2 px-3 py-2">
+                  <div className="text-[11px] font-medium uppercase text-text3">{row.label}</div>
+                  <div className="mt-1 break-words text-[13px] font-medium text-text">{row.value}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {canShipLot && (
           <form onSubmit={handleShipLot} className="rounded-[8px] border border-border bg-surface p-5 sm:p-6">
             <h2 className="text-[18px] font-semibold text-text">Отправить лот</h2>
             <p className="mt-1 text-[13px] text-text2">
               Покупатель запросил доставку
-              {selectedDeliveryProvider ? ` через ${getDeliveryProviderLabel(selectedDeliveryProvider)}` : ""}.
+              {deliveryRequestDetails.selectedDeliveryProvider ? ` через ${getDeliveryProviderLabel(deliveryRequestDetails.selectedDeliveryProvider)}` : ""}.
             </p>
 
             <label className="mt-4 block">
@@ -599,13 +702,6 @@ export default function LotDetailClient({
               {isShipping ? "Отправляем..." : "Отметить как отправленный"}
             </button>
           </form>
-        )}
-
-        {trackingNumber && status === "Shipped" && (
-          <section className="rounded-[8px] border border-border bg-surface p-5 sm:p-6">
-            <div className="text-[12px] font-medium text-text2">Отправление</div>
-            <div className="mt-1 text-[14px] font-medium text-text">{trackingNumber}</div>
-          </section>
         )}
 
         {(canConfirmDelivery || canOpenDispute) && (
