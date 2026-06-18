@@ -31,6 +31,11 @@ export function useSignalR({ lotId, userId, onNewBid, onLotCompleted, onNewNotif
   const [error, setError] = useState<string | null>(null);
   const connectionRef = useRef<signalR.HubConnection | null>(null);
   const startedRef = useRef(false);
+  const callbacksRef = useRef({ onNewBid, onLotCompleted, onNewNotification });
+
+  useEffect(() => {
+    callbacksRef.current = { onNewBid, onLotCompleted, onNewNotification };
+  }, [onNewBid, onLotCompleted, onNewNotification]);
 
   const connect = useCallback(() => {
     if (connectionRef.current || startedRef.current) return;
@@ -46,58 +51,61 @@ export function useSignalR({ lotId, userId, onNewBid, onLotCompleted, onNewNotif
 
     connectionRef.current = connection;
 
+    const joinGroups = async () => {
+      const joins: Promise<unknown>[] = [];
+      if (lotId) joins.push(connection.invoke("JoinLotGroup", lotId));
+      if (userId) joins.push(connection.invoke("JoinUserGroup"));
+      await Promise.all(joins);
+    };
+
     connection.onreconnecting(() => setConnected(false));
     connection.onreconnected(() => {
       setConnected(true);
-      if (lotId) connection.invoke("JoinLotGroup", lotId);
-      if (userId) connection.invoke("JoinUserGroup");
+      setError(null);
+      void joinGroups().catch((joinError: Error) => setError(joinError.message));
     });
     connection.onclose(() => {
+      if (connectionRef.current !== connection) return;
+      connectionRef.current = null;
       setConnected(false);
       startedRef.current = false;
     });
 
-    if (onNewBid) {
-      connection.on("NewBidPlaced", (message: SignalRMessage) => {
-        if (!lotId || message.lotId === lotId) {
-          onNewBid(message);
-        }
-      });
-    }
-
-    if (onLotCompleted) {
-      connection.on("LotCompleted", (message: { lotId: string; winnerName: string; finalPrice: number }) => {
-        if (!lotId || message.lotId === lotId) {
-          onLotCompleted(message);
-        }
-      });
-    }
-
-    if (onNewNotification) {
-      connection.on("NewNotification", (message: NotificationMessage) => {
-        onNewNotification(message);
-      });
-    }
+    connection.on("NewBidPlaced", (message: SignalRMessage) => {
+      if (!lotId || message.lotId === lotId) callbacksRef.current.onNewBid?.(message);
+    });
+    connection.on("LotCompleted", (message: { lotId: string; winnerName: string; finalPrice: number }) => {
+      if (!lotId || message.lotId === lotId) callbacksRef.current.onLotCompleted?.(message);
+    });
+    connection.on("NewNotification", (message: NotificationMessage) => {
+      callbacksRef.current.onNewNotification?.(message);
+    });
 
     startedRef.current = true;
     connection.start()
-      .then(() => {
+      .then(async () => {
+        if (connectionRef.current !== connection) return;
         setConnected(true);
-        if (lotId) connection.invoke("JoinLotGroup", lotId);
-        if (userId) connection.invoke("JoinUserGroup");
+        setError(null);
+        await joinGroups();
       })
       .catch((err) => {
+        if (connectionRef.current !== connection) return;
+        connectionRef.current = null;
         setError(err.message);
+        setConnected(false);
         startedRef.current = false;
+        void connection.stop();
       });
-  }, [lotId, userId, onNewBid, onLotCompleted, onNewNotification]);
+  }, [lotId, userId]);
 
   const disconnect = useCallback(() => {
     if (connectionRef.current) {
-      connectionRef.current.stop();
+      const connection = connectionRef.current;
       connectionRef.current = null;
       startedRef.current = false;
       setConnected(false);
+      void connection.stop();
     }
   }, []);
 

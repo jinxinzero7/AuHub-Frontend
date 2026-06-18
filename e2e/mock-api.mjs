@@ -60,6 +60,12 @@ const adminUserDetail = (userId) => ({
     createdAt: "2026-06-03T09:00:00.000Z",
     updatedAt: "2026-06-03T10:00:00.000Z",
   }],
+  passwordHash: "private-password-hash",
+  refreshTokens: ["private-refresh-token"],
+  passportImagePath: "private/passport.jpg",
+  selfieImagePath: "private/selfie.jpg",
+  walletBalance: 999999,
+  deliveryAddress: "private-delivery-address",
 });
 
 const adminUserActivity = (userId) => ({
@@ -79,7 +85,7 @@ const adminUserActivity = (userId) => ({
   recentBids: [{ bidId: "bid-admin-view-1", lotId: "profile-active-1", lotTitle: "Фотоаппарат для путешествий", lotStatus: "Active", amount: 2400, placedAt: "2026-06-17T11:00:00.000Z" }],
   sellerRating: { reviewsCount: 3, averageRating: 4.7 },
   sellerTrust: { score: 82, badge: "Reliable", eventsCount: 4 },
-  recentTrustEvents: [{ eventId: "trust-event-1", subject: "Seller", reason: "Успешная сделка", points: 5, referenceType: "Lot", referenceId: "profile-active-1", createdAt: "2026-06-16T10:00:00.000Z" }],
+  recentTrustEvents: [{ eventId: "trust-event-1", subject: "Seller", reason: "SuccessfulSale", points: 5, referenceType: "Lot", referenceId: "profile-active-1", createdAt: "2026-06-16T10:00:00.000Z" }],
 });
 
 const server = http.createServer((req, res) => {
@@ -107,6 +113,16 @@ const server = http.createServer((req, res) => {
 
   if (url.pathname === "/api/admin/users/missing-admin-user" && req.method === "GET") {
     json(res, 404, { title: "Not found" });
+    return;
+  }
+
+  if (url.pathname === "/api/admin/users/forbidden-admin-user" && req.method === "GET") {
+    json(res, 403, { title: "Forbidden" });
+    return;
+  }
+
+  if (url.pathname === "/api/admin/users/main-error-user" && req.method === "GET") {
+    json(res, 500, { title: "Identity unavailable" });
     return;
   }
 

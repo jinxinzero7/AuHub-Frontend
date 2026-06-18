@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 
 export default async function AdminUserProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  return <AdminUserProfileClient userId={id} />;
+  return <AdminUserProfileClient key={id} userId={id} />;
 }

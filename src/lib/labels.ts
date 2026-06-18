@@ -55,6 +55,13 @@ export const trustBadgeLabels: Record<string, string> = {
   NeedsAttention: "Требует внимания",
 };
 
+export const trustScoreReasonLabels: Record<string, string> = {
+  SuccessfulSale: "Успешная сделка",
+  SellerLostDispute: "Спор решён не в пользу продавца",
+  BuyerLostDispute: "Спор решён не в пользу покупателя",
+  DeliveryRequestExpired: "Срок запроса доставки истёк",
+};
+
 export const notificationTypeLabels: Record<string, string> = {
   NewBid: "Новая ставка",
   WonAuction: "Вы выиграли",
@@ -110,6 +117,10 @@ export function getDocumentVerificationStatusLabel(status: string) {
 
 export function getTrustBadgeLabel(badge: string) {
   return trustBadgeLabels[badge] ?? "Оценка формируется";
+}
+
+export function getTrustScoreReasonLabel(reason: string) {
+  return trustScoreReasonLabels[reason] ?? "Изменение надёжности";
 }
 
 export function getNotificationTypeLabel(type: string) {

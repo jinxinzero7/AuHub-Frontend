@@ -8,7 +8,7 @@ import { Alert, EmptyState, LoadingState } from "@/components/UiState";
 import api from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/constants";
 import { getApiErrorMessage } from "@/lib/errors";
-import { getDocumentVerificationStatusLabel, getLotStatusLabel, getRoleLabel, getTrustBadgeLabel } from "@/lib/labels";
+import { getDocumentVerificationStatusLabel, getLotStatusLabel, getRoleLabel, getTrustBadgeLabel, getTrustScoreReasonLabel } from "@/lib/labels";
 import { formatDate, formatPrice } from "@/lib/utils";
 import type { AdminUserActivityResponse, AdminUserDetailResponse } from "@/types";
 
@@ -276,7 +276,7 @@ export default function AdminUserProfileClient({ userId }: { userId: string }) {
                 <div className="mt-3 text-[13px] text-text2">Рейтинг: {activity.data.sellerRating.reviewsCount ? `${activity.data.sellerRating.averageRating.toFixed(1)} (${activity.data.sellerRating.reviewsCount})` : "без отзывов"}</div>
                 <div className="mt-1 text-[13px] text-text2">Надёжность: {activity.data.sellerTrust.score}/100 · {getTrustBadgeLabel(activity.data.sellerTrust.badge)}</div>
                 <div className="mt-3 divide-y divide-border">
-                  {activity.data.recentTrustEvents.map((event) => <div key={event.eventId} className="py-3"><div className="flex justify-between gap-3 text-[13px]"><span className="text-text">{event.reason}</span><span className={event.points >= 0 ? "text-green-700" : "text-danger"}>{event.points > 0 ? "+" : ""}{event.points}</span></div><div className="mt-1 text-[12px] text-text3">{formatDate(event.createdAt)}</div></div>)}
+                  {activity.data.recentTrustEvents.map((event) => <div key={event.eventId} className="py-3"><div className="flex justify-between gap-3 text-[13px]"><span className="text-text">{getTrustScoreReasonLabel(event.reason)}</span><span className={event.points >= 0 ? "text-green-700" : "text-danger"}>{event.points > 0 ? "+" : ""}{event.points}</span></div><div className="mt-1 text-[12px] text-text3">{formatDate(event.createdAt)}</div></div>)}
                 </div>
               </div>
             </div>
