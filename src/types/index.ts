@@ -65,7 +65,7 @@ export interface Lot {
   startTime: string;
   endTime: string;
   sellerId: string;
-  winnerId?: string;
+  winnerId?: string | null;
   status: string;
   createdAt: string;
   updatedAt: string;
@@ -221,10 +221,9 @@ export interface CreateReviewRequest {
 
 export interface Bid {
   id: string;
-  lotId: string;
-  userId: string;
+  bidderId?: string | null;
   amount: number;
-  createdAt: string;
+  placedAt: string;
 }
 
 export interface PaginatedResponse<T> {

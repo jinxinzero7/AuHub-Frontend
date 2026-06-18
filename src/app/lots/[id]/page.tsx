@@ -100,6 +100,7 @@ export default async function LotDetailPage({
       <main id="main-content" className="bg-bg min-h-screen">
         <div className="max-w-[960px] mx-auto px-4 sm:px-8 py-10">
           <LotDetailClient
+            key={lot.id}
             lotId={lot.id}
             title={lot.title}
             description={lot.description}

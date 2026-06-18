@@ -38,4 +38,27 @@ test.describe("lot delivery details", () => {
     await expect(details.getByText("+79990001122")).toBeVisible();
     await expect(details.getByText("TRACK-12345")).toBeVisible();
   });
+
+  test("hydrates winner actions and renders anonymous bid history without bidder identity", async ({ page }) => {
+    const token = createMockJwt({
+      sub: "buyer-1",
+      email: "buyer@example.com",
+      name: "Тестовый покупатель",
+      nickname: "buyer",
+      role: "User",
+    });
+
+    await page.addInitScript((accessToken) => {
+      window.localStorage.setItem("accessToken", accessToken);
+    }, token);
+
+    await page.goto("/lots/mock-winner-lot");
+
+    await expect(page.getByRole("heading", { name: "Запросить доставку" })).toBeVisible();
+    await expect(page.getByText("18.06.2026, 12:00")).toBeVisible();
+    const bidHistory = page.getByRole("heading", { name: "История ставок" }).locator("..");
+    await expect(bidHistory.getByText("1 700 ₽")).toBeVisible();
+    await expect(page.getByText("public-bid-1")).toHaveCount(0);
+    await expect(page.getByText(/undefined|invalid date/i)).toHaveCount(0);
+  });
 });

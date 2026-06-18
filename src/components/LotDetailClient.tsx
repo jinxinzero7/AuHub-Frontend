@@ -30,7 +30,7 @@ interface LotDetailClientProps {
   startingPrice: number;
   initialCurrentPrice: number;
   sellerId: string;
-  winnerId?: string;
+  winnerId?: string | null;
   status: string;
   startTime: string;
   endTime: string;
@@ -110,6 +110,8 @@ export default function LotDetailClient({
   const [currentPrice, setCurrentPrice] = useState(initialCurrentPrice);
   const [bids, setBids] = useState<Bid[]>(initialBids);
   const [images, setImages] = useState<LotImage[]>(initialImages);
+  const [resolvedWinnerId, setResolvedWinnerId] = useState(winnerId);
+  const [resolvedDeliveryRequestDeadlineAt, setResolvedDeliveryRequestDeadlineAt] = useState(deliveryRequestDeadlineAt);
   const [newBidNotification, setNewBidNotification] = useState<string | null>(null);
   const [deliveryProvider, setDeliveryProvider] = useState(supportedDeliveryProviders[0] ?? "");
   const [deliveryAddressInput, setDeliveryAddressInput] = useState("");
@@ -147,10 +149,9 @@ export default function LotDetailClient({
     setBids((prev) => [
       {
         id: `signalr-${Date.now()}`,
-        lotId: message.lotId,
-        userId: "",
+        bidderId: null,
         amount: message.currentPrice,
-        createdAt: new Date().toISOString(),
+        placedAt: new Date().toISOString(),
       },
       ...prev,
     ]);
@@ -224,6 +225,8 @@ export default function LotDetailClient({
     api.get<Lot>(API_ENDPOINTS.LOTS.DETAIL(lotId))
       .then((response) => {
         if (!isMounted) return;
+        setResolvedWinnerId(response.data.winnerId);
+        setResolvedDeliveryRequestDeadlineAt(response.data.deliveryRequestDeadlineAt);
         setDeliveryRequestDetails(mapDeliveryRequestDetails(response.data));
       })
       .catch((err) => {
@@ -375,19 +378,19 @@ export default function LotDetailClient({
   }, [lotId, refreshSellerReviews, reviewComment, reviewRating]);
 
   const coverImage = images.length > 0 ? images[0].url : null;
-  const isDeliveryDeadlineExpired = deliveryRequestDeadlineAt
-    ? Date.parse(deliveryRequestDeadlineAt) < Date.parse(currentTime)
+  const isDeliveryDeadlineExpired = resolvedDeliveryRequestDeadlineAt
+    ? Date.parse(resolvedDeliveryRequestDeadlineAt) < Date.parse(currentTime)
     : false;
-  const canRequestDelivery = user?.id === winnerId && status === "DeliveryRequestPending" && !isDeliveryDeadlineExpired;
+  const canRequestDelivery = user?.id === resolvedWinnerId && status === "DeliveryRequestPending" && !isDeliveryDeadlineExpired;
   const canShipLot = isSeller && status === "ShippingPending";
   const canEditLot = isSeller && (status === "Draft" || status === "Rejected");
   const canDemoComplete = isSeller && status === "Active";
-  const canConfirmDelivery = user?.id === winnerId && status === "Shipped";
-  const canOpenDispute = user?.id === winnerId && ["Completed", "DeliveryRequestPending", "ShippingPending", "Shipped", "Delivered"].includes(status);
+  const canConfirmDelivery = user?.id === resolvedWinnerId && status === "Shipped";
+  const canOpenDispute = user?.id === resolvedWinnerId && ["Completed", "DeliveryRequestPending", "ShippingPending", "Shipped", "Delivered"].includes(status);
   const serviceFee = calculateServiceFee(currentPrice);
   const sellerPayout = calculateSellerPayout(currentPrice);
   const existingReview = sellerReviews?.reviews.find((review) => review.lotId === lotId);
-  const canReviewSeller = sellerReviews !== null && user?.id === winnerId && status === "TransactionComplete" && !existingReview;
+  const canReviewSeller = sellerReviews !== null && user?.id === resolvedWinnerId && status === "TransactionComplete" && !existingReview;
   const deliveryDetailRows = [
     deliveryRequestDetails.selectedDeliveryProvider?.trim()
       ? { label: "Служба доставки", value: getDeliveryProviderLabel(deliveryRequestDetails.selectedDeliveryProvider) }
@@ -584,8 +587,8 @@ export default function LotDetailClient({
                   Укажите удобный ПВЗ или адрес из доступных продавцу служб.
                 </p>
               </div>
-              {deliveryRequestDeadlineAt && (
-                <span className="text-[12px] text-text3">до {formatDate(deliveryRequestDeadlineAt)}</span>
+              {resolvedDeliveryRequestDeadlineAt && (
+                <span className="text-[12px] text-text3">до {formatDate(resolvedDeliveryRequestDeadlineAt)}</span>
               )}
             </div>
 
@@ -661,8 +664,8 @@ export default function LotDetailClient({
                   Информация доступна только участникам сделки и администраторам.
                 </p>
               </div>
-              {deliveryRequestDeadlineAt && status === "DeliveryRequestPending" && (
-                <span className="text-[12px] text-text3">до {formatDate(deliveryRequestDeadlineAt)}</span>
+              {resolvedDeliveryRequestDeadlineAt && status === "DeliveryRequestPending" && (
+                <span className="text-[12px] text-text3">до {formatDate(resolvedDeliveryRequestDeadlineAt)}</span>
               )}
             </div>
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -823,7 +826,7 @@ export default function LotDetailClient({
             <div className="mt-4 space-y-2">
               {bids.map((bid) => (
                 <div key={bid.id} className="flex items-center justify-between gap-3 border-b border-border py-2 last:border-0">
-                  <div className="text-[12px] text-text2">{formatDate(bid.createdAt)}</div>
+                  <div className="text-[12px] text-text2">{formatDate(bid.placedAt)}</div>
                   <div className="font-mono text-[14px] font-medium text-gold">{formatPrice(bid.amount)} ₽</div>
                 </div>
               ))}

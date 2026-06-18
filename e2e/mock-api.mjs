@@ -221,7 +221,7 @@ const server = http.createServer((req, res) => {
       startTime: "2026-06-16T10:00:00.000Z",
       endTime: "2026-06-18T10:00:00.000Z",
       sellerId: "seller-1",
-      winnerId: "buyer-1",
+      winnerId: hasAuth ? "buyer-1" : null,
       status: "ShippingPending",
       createdAt: "2026-06-16T10:00:00.000Z",
       updatedAt: "2026-06-17T10:00:00.000Z",
@@ -240,6 +240,37 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (url.pathname === "/api/lots/mock-winner-lot" && req.method === "GET") {
+    const hasAuth = Boolean(req.headers.authorization);
+    json(res, 200, {
+      id: "mock-winner-lot",
+      title: "Лот победителя",
+      description: "Лот для проверки авторизованного обновления данных победителя.",
+      startingPrice: 1000,
+      currentPrice: 1700,
+      durationHours: 48,
+      startTime: "2026-06-16T10:00:00.000Z",
+      endTime: "2026-06-18T10:00:00.000Z",
+      sellerId: "seller-1",
+      winnerId: hasAuth ? "buyer-1" : null,
+      status: "DeliveryRequestPending",
+      createdAt: "2026-06-16T10:00:00.000Z",
+      updatedAt: "2026-06-18T10:00:00.000Z",
+      bidsCount: 1,
+      coverImageUrl: null,
+      trackingNumber: null,
+      selectedDeliveryProvider: null,
+      deliveryAddress: null,
+      deliveryRecipientName: null,
+      deliveryRecipientPhone: null,
+      deliveryRequestedAt: null,
+      deliveryRequestDeadlineAt: hasAuth ? "2099-06-21T10:00:00.000Z" : null,
+      supportedDeliveryProviders: ["Cdek"],
+      adminComment: null,
+    });
+    return;
+  }
+
   if (url.pathname === "/api/lots/mock-delivery-lot/images" && req.method === "GET") {
     json(res, 200, []);
     return;
@@ -247,6 +278,19 @@ const server = http.createServer((req, res) => {
 
   if (url.pathname === "/api/lots/mock-delivery-lot/bids" && req.method === "GET") {
     json(res, 200, { bids: [] });
+    return;
+  }
+
+  if (url.pathname === "/api/lots/mock-winner-lot/images" && req.method === "GET") {
+    json(res, 200, []);
+    return;
+  }
+
+  if (url.pathname === "/api/lots/mock-winner-lot/bids" && req.method === "GET") {
+    json(res, 200, {
+      success: true,
+      bids: [{ id: "public-bid-1", bidderId: null, amount: 1700, placedAt: "2026-06-18T09:00:00.000Z" }],
+    });
     return;
   }
 
