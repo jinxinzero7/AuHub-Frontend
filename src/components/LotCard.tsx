@@ -88,42 +88,41 @@ export default function LotCard({ lot }: LotCardProps) {
   const hasVerifiedDocs = sellerProfile?.documentVerificationStatus === "Verified";
 
   return (
-    <Link
-      href={`/lots/${lot.id}`}
-      className="group block overflow-hidden rounded-[8px] border border-border bg-surface transition-all duration-200 hover:-translate-y-0.5 hover:border-border2 hover:shadow-[0_12px_28px_rgba(15,23,42,0.08)]"
-    >
-      <div className={`relative aspect-[4/3] overflow-hidden ${hasCoverImage ? "bg-bg2" : placeholderClass}`}>
-        {hasCoverImage && lot.coverImageUrl && (
-          <Image
-            src={lot.coverImageUrl}
-            alt={lot.title}
-            fill
-            sizes="(max-width: 768px) 100vw, 360px"
-            className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-            unoptimized
-          />
-        )}
-
-        {!hasCoverImage && (
-          <div className="absolute inset-0 flex items-center justify-center text-text3">
-            <Gavel className="w-10 h-10" />
-          </div>
-        )}
-
-        <div className="absolute left-3 top-3 flex flex-wrap gap-2">
-          <span className={`rounded-[7px] px-2.5 py-1 text-[11px] font-medium ${
-            isActive
-              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-              : "bg-white/90 text-text2 border border-white/70"
-          }`}>
-            {statusLabel}
-          </span>
-          {isUrgent && (
-            <span className="rounded-[7px] bg-danger-bg border border-danger/20 px-2.5 py-1 text-[11px] font-medium text-danger">
-              Скоро конец
-            </span>
+    <article className="group overflow-hidden rounded-[8px] border border-border bg-surface transition-all duration-200 hover:-translate-y-0.5 hover:border-border2 hover:shadow-[0_12px_28px_rgba(15,23,42,0.08)]">
+      <div className="relative">
+        <Link href={`/lots/${lot.id}`} className={`relative block aspect-[4/3] overflow-hidden ${hasCoverImage ? "bg-bg2" : placeholderClass}`}>
+          {hasCoverImage && lot.coverImageUrl && (
+            <Image
+              src={lot.coverImageUrl}
+              alt={lot.title}
+              fill
+              sizes="(max-width: 768px) 100vw, 360px"
+              className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+              unoptimized
+            />
           )}
-        </div>
+
+          {!hasCoverImage && (
+            <div className="absolute inset-0 flex items-center justify-center text-text3">
+              <Gavel className="w-10 h-10" />
+            </div>
+          )}
+
+          <div className="absolute left-3 top-3 flex flex-wrap gap-2">
+            <span className={`rounded-[7px] px-2.5 py-1 text-[11px] font-medium ${
+              isActive
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                : "bg-white/90 text-text2 border border-white/70"
+            }`}>
+              {statusLabel}
+            </span>
+            {isUrgent && (
+              <span className="rounded-[7px] bg-danger-bg border border-danger/20 px-2.5 py-1 text-[11px] font-medium text-danger">
+                Скоро конец
+              </span>
+            )}
+          </div>
+        </Link>
 
         <button
           onClick={(e) => {
@@ -141,7 +140,7 @@ export default function LotCard({ lot }: LotCardProps) {
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
           <h3 className="min-h-[42px] text-[15px] font-semibold leading-[1.35] text-text line-clamp-2">
-            {lot.title}
+            <Link href={`/lots/${lot.id}`} className="hover:text-gold">{lot.title}</Link>
           </h3>
           <div className="shrink-0 text-right">
             <div className="text-[18px] font-semibold text-text font-mono tracking-[-0.3px]">
@@ -153,7 +152,16 @@ export default function LotCard({ lot }: LotCardProps) {
           </div>
         </div>
 
-        <div className="mt-3 flex items-center gap-2 text-[12px] text-text2">
+        {lot.sellerId && (
+          <Link
+            href={`/sellers/${lot.sellerId}`}
+            className="mt-3 inline-flex text-[13px] font-medium text-text hover:text-gold"
+          >
+            {sellerProfile?.nickname ? `@${sellerProfile.nickname}` : sellerProfile?.name || "Профиль продавца"}
+          </Link>
+        )}
+
+        <div className="mt-2 flex items-center gap-2 text-[12px] text-text2">
           <Star className={`w-4 h-4 ${hasReviews ? "fill-amber-400 text-amber-400" : "text-text3"}`} />
           {hasReviews ? (
             <span>{sellerReviews.averageRating.toFixed(1)} · {sellerReviews.reviewsCount} отзывов</span>
@@ -198,6 +206,6 @@ export default function LotCard({ lot }: LotCardProps) {
           )}
         </div>
       </div>
-    </Link>
+    </article>
   );
 }

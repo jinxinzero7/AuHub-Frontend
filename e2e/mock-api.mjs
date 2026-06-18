@@ -39,11 +39,29 @@ const server = http.createServer((req, res) => {
   if (url.pathname === "/api/lots" && req.method === "GET") {
     json(res, 200, {
       success: true,
-      lots: [],
+      lots: [
+        {
+          id: "mock-delivery-lot",
+          title: "Тестовый лот с доставкой",
+          description: "Публичный лот для проверки карточки.",
+          startingPrice: 1000,
+          currentPrice: 1500,
+          durationHours: 48,
+          startTime: "2026-06-17T10:00:00.000Z",
+          endTime: "2026-06-19T10:00:00.000Z",
+          sellerId: "seller-1",
+          status: "Active",
+          createdAt: "2026-06-17T10:00:00.000Z",
+          updatedAt: "2026-06-17T10:00:00.000Z",
+          bidsCount: 1,
+          coverImageUrl: null,
+          supportedDeliveryProviders: ["Cdek"],
+        },
+      ],
       page: Number(url.searchParams.get("page") ?? 1),
       pageSize: Number(url.searchParams.get("pageSize") ?? 9),
-      totalCount: 0,
-      totalPages: 0,
+      totalCount: 1,
+      totalPages: 1,
       error: null,
     });
     return;
@@ -118,7 +136,74 @@ const server = http.createServer((req, res) => {
       nickname: "seller",
       name: "Тестовый продавец",
       documentVerificationStatus: "Verified",
+      email: "private@example.com",
+      phoneNumber: "+79999999999",
+      documentImagePath: "private/passport.jpg",
+      banReason: "private",
+      adminComment: "private",
     });
+    return;
+  }
+
+  if (url.pathname === "/api/sellers/profile-seller/reviews" && req.method === "GET") {
+    json(res, 200, {
+      sellerId: "profile-seller",
+      reviewsCount: 2,
+      averageRating: 4.5,
+      reviews: [
+        {
+          id: "review-1",
+          lotId: "sold-lot-1",
+          sellerId: "profile-seller",
+          buyerId: "private-buyer-id",
+          rating: 5,
+          comment: "Всё соответствует описанию, отправка без задержек.",
+          createdAt: "2026-06-15T12:00:00.000Z",
+        },
+        {
+          id: "review-2",
+          lotId: "sold-lot-2",
+          sellerId: "profile-seller",
+          buyerId: "private-buyer-id-2",
+          rating: 4,
+          comment: null,
+          createdAt: "2026-06-10T12:00:00.000Z",
+        },
+      ],
+    });
+    return;
+  }
+
+  if (url.pathname === "/api/sellers/profile-seller/trust" && req.method === "GET") {
+    json(res, 200, {
+      sellerId: "profile-seller",
+      score: 82,
+      badge: "Reliable",
+      eventsCount: 7,
+      successfulSales: 6,
+      sellerLostDisputes: 0,
+    });
+    return;
+  }
+
+  if (url.pathname === "/api/auth/users/profile-seller/public-profile" && req.method === "GET") {
+    json(res, 200, {
+      userId: "profile-seller",
+      nickname: "technik",
+      name: "Иван Петров",
+      documentVerificationStatus: "Verified",
+      email: "private@example.com",
+      phoneNumber: "+79999999999",
+      documentImagePath: "private/passport.jpg",
+      banReason: "private",
+      adminComment: "private",
+      walletBalance: 500000,
+    });
+    return;
+  }
+
+  if (url.pathname === "/api/auth/users/missing-seller/public-profile" && req.method === "GET") {
+    json(res, 404, { success: false, error: "Not found" });
     return;
   }
 

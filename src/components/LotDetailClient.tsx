@@ -541,9 +541,12 @@ export default function LotDetailClient({
           <h2 className="text-[18px] font-semibold text-text">Продавец</h2>
           <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="text-[14px] font-medium text-text">
-                {sellerProfile?.nickname ? `@${sellerProfile.nickname}` : "Профиль продавца"}
-              </div>
+              <Link
+                href={`/sellers/${sellerId}`}
+                className="text-[14px] font-medium text-text hover:text-gold"
+              >
+                {sellerProfile?.nickname ? `@${sellerProfile.nickname}` : sellerProfile?.name || "Профиль продавца"}
+              </Link>
               <div className="mt-1 flex items-center gap-2 text-[13px] text-text2">
                 <Star className={`h-4 w-4 ${sellerReviews && sellerReviews.reviewsCount > 0 ? "fill-gold text-gold" : "text-text3"}`} />
                 {sellerReviews && sellerReviews.reviewsCount > 0 ? (
