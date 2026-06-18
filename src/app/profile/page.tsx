@@ -461,7 +461,7 @@ function MyLotsTab({ userId }: { userId: string }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.get(`/api/lots?sellerId=${userId}&includeDrafts=true`)
+    api.get(API_ENDPOINTS.LOTS.MY)
       .then((res) => setLots(res.data.lots ?? []))
       .catch((err) => setError(getApiErrorMessage(err, "Не удалось загрузить ваши лоты")))
       .finally(() => setLoading(false));
@@ -548,7 +548,7 @@ function MyWinsTab({ userId }: { userId: string }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.get(`/api/lots?winnerId=${userId}`)
+    api.get(API_ENDPOINTS.LOTS.MY_WINS)
       .then((res) => setLots(res.data.lots ?? []))
       .catch((err) => setError(getApiErrorMessage(err, "Не удалось загрузить выигрыши")))
       .finally(() => setLoading(false));

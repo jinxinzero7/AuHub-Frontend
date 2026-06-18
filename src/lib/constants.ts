@@ -26,6 +26,8 @@ export const API_ENDPOINTS = {
   },
   LOTS: {
     LIST: '/api/lots',
+    MY: '/api/me/lots',
+    MY_WINS: '/api/me/wins',
     DETAIL: (id: string) => `/api/lots/${id}`,
     BIDS: (id: string) => `/api/lots/${id}/bids`,
     IMAGES: (id: string) => `/api/lots/${id}/images`,
