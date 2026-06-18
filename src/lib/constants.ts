@@ -59,6 +59,8 @@ export const API_ENDPOINTS = {
     MARK_READ: (id: string) => `/api/notifications/${id}/read`,
   },
   ADMIN: {
+    USER_DETAIL: (userId: string) => `/api/admin/users/${userId}`,
+    USER_ACTIVITY: (userId: string) => `/api/admin/users/${userId}/activity`,
     PENDING_LOTS: '/api/admin/lots/pending',
     FROZEN_LOTS: '/api/admin/lots/frozen',
     DISPUTES: '/api/admin/disputes',

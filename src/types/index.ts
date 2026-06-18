@@ -138,6 +138,82 @@ export interface PublicSellerLotsResponse {
   totalPages: number;
 }
 
+export interface AdminDocumentVerificationMetadata {
+  requestId: string;
+  status: string;
+  reviewedByAdminId?: string | null;
+  reviewedAt?: string | null;
+  rejectionReason?: string | null;
+  createdAt: string;
+  updatedAt?: string | null;
+}
+
+export interface AdminUserDetailResponse {
+  userId: string;
+  role: string;
+  email: string;
+  phoneNumber: string;
+  nickname: string;
+  name: string;
+  isEmailVerified: boolean;
+  emailVerifiedAt?: string | null;
+  isPhoneVerified: boolean;
+  phoneVerifiedAt?: string | null;
+  documentVerificationStatus: string;
+  documentVerifiedAt?: string | null;
+  isBanned: boolean;
+  bannedAt?: string | null;
+  banReason?: string | null;
+  createdAt: string;
+  updatedAt?: string | null;
+  documentVerificationHistory: AdminDocumentVerificationMetadata[];
+}
+
+export interface AdminUserLotSummary {
+  lotId: string;
+  title: string;
+  status: string;
+  currentPrice: number;
+  bidsCount: number;
+  endTime?: string | null;
+  createdAt: string;
+}
+
+export interface AdminUserActivityResponse {
+  userId: string;
+  createdLotsCount: number;
+  bidsCount: number;
+  winsCount: number;
+  activeDealsCount: number;
+  lotStatusCounts: Record<string, number>;
+  createdLots: {
+    items: AdminUserLotSummary[];
+    page: number;
+    pageSize: number;
+    totalCount: number;
+    totalPages: number;
+  };
+  recentBids: Array<{
+    bidId: string;
+    lotId: string;
+    lotTitle: string;
+    lotStatus: string;
+    amount: number;
+    placedAt: string;
+  }>;
+  sellerRating: { reviewsCount: number; averageRating: number };
+  sellerTrust: { score: number; badge: string; eventsCount: number };
+  recentTrustEvents: Array<{
+    eventId: string;
+    subject: string;
+    reason: string;
+    points: number;
+    referenceType: string;
+    referenceId: string;
+    createdAt: string;
+  }>;
+}
+
 export interface CreateReviewRequest {
   rating: number;
   comment?: string;

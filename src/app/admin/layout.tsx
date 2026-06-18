@@ -33,16 +33,17 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   if (!isAuthenticated || user?.role !== 1) {
+    const isSignedInWithoutAdminRole = isAuthenticated && user?.role !== 1;
     return (
       <>
         <Header />
         <main id="main-content" className="flex min-h-screen items-center justify-center bg-bg px-4">
           <div className="max-w-[460px]">
             <EmptyState
-              title="Доступ закрыт"
-              description="Админ-панель доступна только сотрудникам платформы."
-              actionHref="/login"
-              actionLabel="Войти"
+              title={isSignedInWithoutAdminRole ? "Недостаточно прав" : "Требуется вход"}
+              description={isSignedInWithoutAdminRole ? "Админ-панель доступна только сотрудникам платформы." : "Войдите в аккаунт администратора, чтобы открыть этот раздел."}
+              actionHref={isSignedInWithoutAdminRole ? "/" : "/login"}
+              actionLabel={isSignedInWithoutAdminRole ? "На главную" : "Войти"}
             />
           </div>
         </main>
@@ -62,7 +63,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                   key={link.href}
                   href={link.href}
                   className={`block whitespace-nowrap rounded-[7px] px-4 py-2 text-[13px] font-medium transition-colors ${
-                    pathname === link.href
+                    pathname === link.href || pathname.startsWith(`${link.href}/`)
                       ? "bg-gold text-white"
                       : "text-text2 hover:bg-bg2 hover:text-text"
                   }`}

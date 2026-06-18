@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import Link from "next/link";
 import api from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/constants";
 import { getApiErrorMessage } from "@/lib/errors";
@@ -131,7 +132,7 @@ export default function BannedPage() {
             <article key={user.userId} className="rounded-[8px] border border-border bg-surface p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
-                  <div className="truncate text-[15px] font-semibold text-text">{user.name || "Без имени"}</div>
+                  <Link href={`/admin/users/${user.userId}`} className="truncate text-[15px] font-semibold text-text hover:text-gold">{user.name || "Без имени"}</Link>
                   <div className="truncate text-[13px] text-text2">{user.email}</div>
                   <div className="mt-2 break-all text-[12px] text-text3">ID: {user.userId}</div>
                   <div className="mt-1 text-[12px] text-text3">

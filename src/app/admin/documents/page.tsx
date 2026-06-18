@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import api from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/constants";
 import { getApiErrorMessage } from "@/lib/errors";
@@ -103,9 +104,7 @@ export default function AdminDocumentsPage() {
                   <h2 className="text-[16px] font-semibold text-text">Заявка {request.id.slice(0, 8)}</h2>
                   <span className="text-[12px] text-text3">{new Date(request.createdAt).toLocaleDateString("ru-RU")}</span>
                 </div>
-                <div className="break-all text-[12px] text-text2">ID пользователя: {request.userId}</div>
-                <div className="break-all text-[12px] text-text2">Паспорт: {request.passportImagePath}</div>
-                <div className="break-all text-[12px] text-text2">Селфи: {request.selfieImagePath}</div>
+                <Link href={`/admin/users/${request.userId}`} className="break-all text-[12px] text-gold hover:underline">Профиль пользователя: {request.userId}</Link>
               </div>
 
               <div className="mt-4 flex flex-col gap-2 sm:flex-row">

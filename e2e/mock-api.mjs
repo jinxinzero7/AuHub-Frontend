@@ -31,6 +31,57 @@ const activeLot = (id, title, sellerId) => ({
   supportedDeliveryProviders: ["Cdek", "RussianPost"],
 });
 
+let adminUserBanned = false;
+
+const adminUserDetail = (userId) => ({
+  userId,
+  role: "User",
+  email: "moderated@example.com",
+  phoneNumber: "+79990000001",
+  nickname: "moderated_user",
+  name: "Иван Модерируемый",
+  isEmailVerified: true,
+  emailVerifiedAt: "2026-06-01T10:00:00.000Z",
+  isPhoneVerified: true,
+  phoneVerifiedAt: "2026-06-02T10:00:00.000Z",
+  documentVerificationStatus: "Verified",
+  documentVerifiedAt: "2026-06-03T10:00:00.000Z",
+  isBanned: adminUserBanned,
+  bannedAt: adminUserBanned ? "2026-06-18T10:00:00.000Z" : null,
+  banReason: adminUserBanned ? "Нарушение правил" : null,
+  createdAt: "2026-05-01T10:00:00.000Z",
+  updatedAt: "2026-06-03T10:00:00.000Z",
+  documentVerificationHistory: [{
+    requestId: "document-request-1",
+    status: "Approved",
+    reviewedByAdminId: "admin-1",
+    reviewedAt: "2026-06-03T10:00:00.000Z",
+    rejectionReason: null,
+    createdAt: "2026-06-03T09:00:00.000Z",
+    updatedAt: "2026-06-03T10:00:00.000Z",
+  }],
+});
+
+const adminUserActivity = (userId) => ({
+  userId,
+  createdLotsCount: 2,
+  bidsCount: 5,
+  winsCount: 1,
+  activeDealsCount: 1,
+  lotStatusCounts: { Active: 1, TransactionComplete: 1 },
+  createdLots: {
+    items: [{ lotId: "profile-active-1", title: "Фотоаппарат для путешествий", status: "Active", currentPrice: 2500, bidsCount: 2, endTime: "2026-06-20T10:00:00.000Z", createdAt: "2026-06-17T10:00:00.000Z" }],
+    page: 1,
+    pageSize: 20,
+    totalCount: 1,
+    totalPages: 1,
+  },
+  recentBids: [{ bidId: "bid-admin-view-1", lotId: "profile-active-1", lotTitle: "Фотоаппарат для путешествий", lotStatus: "Active", amount: 2400, placedAt: "2026-06-17T11:00:00.000Z" }],
+  sellerRating: { reviewsCount: 3, averageRating: 4.7 },
+  sellerTrust: { score: 82, badge: "Reliable", eventsCount: 4 },
+  recentTrustEvents: [{ eventId: "trust-event-1", subject: "Seller", reason: "Успешная сделка", points: 5, referenceType: "Lot", referenceId: "profile-active-1", createdAt: "2026-06-16T10:00:00.000Z" }],
+});
+
 const server = http.createServer((req, res) => {
   if (!req.url) {
     json(res, 400, { success: false });
@@ -51,6 +102,63 @@ const server = http.createServer((req, res) => {
 
   if (url.pathname === "/health") {
     json(res, 200, { status: "ok" });
+    return;
+  }
+
+  if (url.pathname === "/api/admin/users/missing-admin-user" && req.method === "GET") {
+    json(res, 404, { title: "Not found" });
+    return;
+  }
+
+  if (["admin-user", "activity-error-user"].includes(url.pathname.split("/")[4]) && /^\/api\/admin\/users\/[^/]+$/.test(url.pathname) && req.method === "GET") {
+    json(res, 200, adminUserDetail(url.pathname.split("/")[4]));
+    return;
+  }
+
+  if (url.pathname === "/api/admin/users/activity-error-user/activity" && req.method === "GET") {
+    json(res, 500, { title: "Activity unavailable" });
+    return;
+  }
+
+  if (url.pathname === "/api/admin/users/admin-user/activity" && req.method === "GET") {
+    json(res, 200, adminUserActivity("admin-user"));
+    return;
+  }
+
+  if (url.pathname === "/api/admin/users/admin-user/ban" && req.method === "POST") {
+    adminUserBanned = true;
+    json(res, 200, { success: true });
+    return;
+  }
+
+  if (url.pathname === "/api/admin/users/admin-user/unban" && req.method === "POST") {
+    adminUserBanned = false;
+    json(res, 200, { success: true });
+    return;
+  }
+
+  if (url.pathname === "/api/admin/lots/pending" && req.method === "GET") {
+    json(res, 200, [{ id: "pending-lot-1", title: "Лот на проверке", description: "Описание", startingPrice: 1000, currentPrice: 1000, sellerId: "admin-user", createdAt: "2026-06-17T10:00:00.000Z" }]);
+    return;
+  }
+
+  if (url.pathname === "/api/auth/document-verification/pending" && req.method === "GET") {
+    json(res, 200, [{ id: "document-request-1", userId: "admin-user", passportImagePath: "private/passport.jpg", selfieImagePath: "private/selfie.jpg", status: "PendingReview", createdAt: "2026-06-17T10:00:00.000Z" }]);
+    return;
+  }
+
+  if (url.pathname === "/api/admin/disputes" && req.method === "GET") {
+    json(res, 200, [{ id: "disputed-lot-1", title: "Спорный лот", sellerId: "admin-user", winnerId: null, currentPrice: 3000, createdAt: "2026-06-17T10:00:00.000Z" }]);
+    return;
+  }
+
+  if (url.pathname === "/api/admin/lots/frozen" && req.method === "GET") {
+    json(res, 200, [{ id: "frozen-lot-1", title: "Замороженный лот", sellerId: "admin-user", winnerId: null, startingPrice: 2000, currentPrice: 2500, createdAt: "2026-06-17T10:00:00.000Z" }]);
+    return;
+  }
+
+  if (url.pathname === "/api/admin/users/banned" && req.method === "GET") {
+    json(res, 200, [{ userId: "admin-user", email: "moderated@example.com", name: "Иван Модерируемый", bannedAt: "2026-06-18T10:00:00.000Z", reason: "Нарушение правил" }]);
     return;
   }
 

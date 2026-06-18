@@ -11,6 +11,8 @@ import { Alert, EmptyState, LoadingState, PageHeader } from "@/components/UiStat
 interface LotItem {
   id: string;
   title: string;
+  sellerId: string;
+  winnerId?: string | null;
   startingPrice: number;
   currentPrice: number;
   createdAt: string;
@@ -74,6 +76,10 @@ export default function FrozenPage() {
                 </Link>
                 <div className="mt-1 text-[12px] text-text2">
                   Цена: {formatPrice(lot.currentPrice ?? lot.startingPrice)} ₽
+                </div>
+                <div className="mt-2 flex flex-wrap gap-3 text-[12px]">
+                  <Link href={`/admin/users/${lot.sellerId}`} className="break-all text-gold hover:underline">Продавец: {lot.sellerId}</Link>
+                  {lot.winnerId && <Link href={`/admin/users/${lot.winnerId}`} className="break-all text-gold hover:underline">Победитель: {lot.winnerId}</Link>}
                 </div>
               </div>
               <button

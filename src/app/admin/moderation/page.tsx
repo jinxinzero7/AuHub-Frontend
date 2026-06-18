@@ -104,7 +104,7 @@ export default function ModerationPage() {
                   <div className="mt-3 flex flex-wrap gap-3 text-[12px] text-text3">
                     <span>Старт: {formatPrice(lot.startingPrice)} ₽</span>
                     <span>Создан: {new Date(lot.createdAt).toLocaleDateString("ru-RU")}</span>
-                    <span className="break-all">Продавец: {lot.sellerId}</span>
+                    <Link href={`/admin/users/${lot.sellerId}`} className="break-all text-gold hover:underline">Продавец: {lot.sellerId}</Link>
                   </div>
                 </div>
               </div>

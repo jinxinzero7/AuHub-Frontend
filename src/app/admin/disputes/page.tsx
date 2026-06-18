@@ -78,8 +78,12 @@ export default function DisputesPage() {
               <div className="mt-3 grid gap-2 text-[12px] text-text2 sm:grid-cols-2">
                 <span>Сумма: {formatPrice(lot.currentPrice)} ₽</span>
                 <span>Создан: {new Date(lot.createdAt).toLocaleDateString("ru-RU")}</span>
-                <span className="break-all">Продавец: {lot.sellerId}</span>
-                <span className="break-all">Победитель: {lot.winnerId ?? "нет"}</span>
+                <Link href={`/admin/users/${lot.sellerId}`} className="break-all text-gold hover:underline">Продавец: {lot.sellerId}</Link>
+                {lot.winnerId ? (
+                  <Link href={`/admin/users/${lot.winnerId}`} className="break-all text-gold hover:underline">Победитель: {lot.winnerId}</Link>
+                ) : (
+                  <span>Победитель: нет</span>
+                )}
               </div>
               <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                 <button
