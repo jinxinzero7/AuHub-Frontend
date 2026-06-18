@@ -34,10 +34,13 @@ export function useSignalR({ lotId, userId, onNewBid, onLotCompleted, onNewNotif
 
   const connect = useCallback(() => {
     if (connectionRef.current || startedRef.current) return;
+    if (!localStorage.getItem("accessToken")) return;
 
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl(`${API_URL}/hubs/auction`)
+      .withUrl(`${API_URL}/hubs/auction`, {
+        accessTokenFactory: () => localStorage.getItem("accessToken") ?? "",
+      })
       .withAutomaticReconnect()
       .build();
 
@@ -47,7 +50,7 @@ export function useSignalR({ lotId, userId, onNewBid, onLotCompleted, onNewNotif
     connection.onreconnected(() => {
       setConnected(true);
       if (lotId) connection.invoke("JoinLotGroup", lotId);
-      if (userId) connection.invoke("JoinUserGroup", userId);
+      if (userId) connection.invoke("JoinUserGroup");
     });
     connection.onclose(() => {
       setConnected(false);
@@ -81,7 +84,7 @@ export function useSignalR({ lotId, userId, onNewBid, onLotCompleted, onNewNotif
       .then(() => {
         setConnected(true);
         if (lotId) connection.invoke("JoinLotGroup", lotId);
-        if (userId) connection.invoke("JoinUserGroup", userId);
+        if (userId) connection.invoke("JoinUserGroup");
       })
       .catch((err) => {
         setError(err.message);
