@@ -4,12 +4,15 @@ import axios from "axios";
 import { BadgeCheck, ShieldCheck, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
+import LotCard from "@/components/LotCard";
 import { Alert, EmptyState, LoadingState } from "@/components/UiState";
 import api from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/constants";
 import { getDocumentVerificationStatusLabel, getTrustBadgeLabel } from "@/lib/labels";
 import { formatDate } from "@/lib/utils";
-import type { PublicUserProfileResponse, SellerReviewsResponse, SellerTrustScoreResponse } from "@/types";
+import type { PublicSellerLotsResponse, PublicUserProfileResponse, SellerReviewsResponse, SellerTrustScoreResponse } from "@/types";
+
+const LOTS_PAGE_SIZE = 9;
 
 type ProfileState =
   | { status: "loading" }
@@ -22,8 +25,15 @@ type ProfileState =
       trust: SellerTrustScoreResponse | null;
     };
 
+type LotsState =
+  | { status: "loading"; sellerId: string; page: number }
+  | { status: "error"; sellerId: string; page: number }
+  | { status: "ready"; sellerId: string; page: number; data: PublicSellerLotsResponse };
+
 export default function SellerProfileClient({ sellerId }: { sellerId: string }) {
   const [state, setState] = useState<ProfileState>({ status: "loading" });
+  const [lotsPage, setLotsPage] = useState(1);
+  const [lotsState, setLotsState] = useState<LotsState>({ status: "loading", sellerId, page: 1 });
 
   useEffect(() => {
     let active = true;
@@ -51,6 +61,28 @@ export default function SellerProfileClient({ sellerId }: { sellerId: string }) 
       active = false;
     };
   }, [sellerId]);
+
+  useEffect(() => {
+    let active = true;
+
+    api.get<PublicSellerLotsResponse>(API_ENDPOINTS.SELLERS.LOTS(sellerId), {
+      params: { page: lotsPage, pageSize: LOTS_PAGE_SIZE },
+    })
+      .then((response) => {
+        if (!active) return;
+        setLotsState({ status: "ready", sellerId, page: lotsPage, data: response.data });
+      })
+      .catch(() => {
+        if (!active) return;
+        setLotsState({ status: "error", sellerId, page: lotsPage });
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [lotsPage, sellerId]);
+
+  const isLotsLoading = lotsState.status === "loading" || lotsState.sellerId !== sellerId || lotsState.page !== lotsPage;
 
   return (
     <>
@@ -145,7 +177,45 @@ export default function SellerProfileClient({ sellerId }: { sellerId: string }) 
 
               <section aria-labelledby="seller-lots-title">
                 <h2 id="seller-lots-title" className="mb-3 text-[20px] font-semibold text-text">Активные лоты</h2>
-                <EmptyState title="Лоты появятся позже" description="Публичная витрина продавца пока недоступна." />
+                {isLotsLoading && <LoadingState label="Загружаем лоты продавца..." />}
+
+                {!isLotsLoading && lotsState.status === "error" && (
+                  <Alert>Не удалось загрузить активные лоты. Остальные данные профиля доступны.</Alert>
+                )}
+
+                {!isLotsLoading && lotsState.status === "ready" && lotsState.data.lots.length === 0 && (
+                  <EmptyState title="Активных лотов пока нет" description="Новые объявления продавца появятся здесь после модерации." />
+                )}
+
+                {!isLotsLoading && lotsState.status === "ready" && lotsState.data.lots.length > 0 && (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {lotsState.data.lots.map((lot) => <LotCard key={lot.id} lot={lot} />)}
+                  </div>
+                )}
+
+                {!isLotsLoading && lotsState.status === "ready" && lotsState.data.totalPages > 1 && (
+                  <nav className="mt-6 flex items-center justify-center gap-2" aria-label="Страницы лотов продавца">
+                    <button
+                      type="button"
+                      onClick={() => setLotsPage((page) => Math.max(1, page - 1))}
+                      disabled={lotsState.data.page <= 1}
+                      className="rounded-[7px] border border-border px-3 py-2 text-[13px] text-text2 hover:border-gold hover:text-gold disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Назад
+                    </button>
+                    <span className="px-2 text-[13px] text-text2">
+                      {lotsState.data.page} из {lotsState.data.totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setLotsPage((page) => Math.min(lotsState.data.totalPages, page + 1))}
+                      disabled={lotsState.data.page >= lotsState.data.totalPages}
+                      className="rounded-[7px] border border-border px-3 py-2 text-[13px] text-text2 hover:border-gold hover:text-gold disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Вперёд
+                    </button>
+                  </nav>
+                )}
               </section>
             </div>
           )}

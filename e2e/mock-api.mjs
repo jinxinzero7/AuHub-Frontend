@@ -13,6 +13,24 @@ const json = (res, status, body) => {
   res.end(JSON.stringify(body));
 };
 
+const activeLot = (id, title, sellerId) => ({
+  id,
+  title,
+  description: "Публичный активный лот продавца.",
+  startingPrice: 2000,
+  currentPrice: 2500,
+  durationHours: 72,
+  startTime: "2026-06-17T10:00:00.000Z",
+  endTime: "2026-06-20T10:00:00.000Z",
+  sellerId,
+  status: "Active",
+  createdAt: "2026-06-17T10:00:00.000Z",
+  updatedAt: "2026-06-17T10:00:00.000Z",
+  bidsCount: 2,
+  coverImageUrl: null,
+  supportedDeliveryProviders: ["Cdek", "RussianPost"],
+});
+
 const server = http.createServer((req, res) => {
   if (!req.url) {
     json(res, 400, { success: false });
@@ -108,6 +126,59 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (["/api/lots/profile-active-1", "/api/lots/profile-active-2"].includes(url.pathname) && req.method === "GET") {
+    const id = url.pathname.split("/").at(-1);
+    json(res, 200, activeLot(id, id === "profile-active-1" ? "Фотоаппарат для путешествий" : "Объектив 50 мм", "profile-seller"));
+    return;
+  }
+
+  if (["/api/lots/profile-active-1/images", "/api/lots/profile-active-2/images"].includes(url.pathname) && req.method === "GET") {
+    json(res, 200, []);
+    return;
+  }
+
+  if (["/api/lots/profile-active-1/bids", "/api/lots/profile-active-2/bids"].includes(url.pathname) && req.method === "GET") {
+    json(res, 200, { bids: [] });
+    return;
+  }
+
+  if (url.pathname === "/api/sellers/seller-1/lots" && req.method === "GET") {
+    json(res, 200, {
+      success: true,
+      lots: [activeLot("seller-active-lot", "Активный лот продавца", "seller-1")],
+      page: 1,
+      pageSize: 9,
+      totalCount: 1,
+      totalPages: 1,
+    });
+    return;
+  }
+
+  if (url.pathname === "/api/sellers/profile-seller/lots" && req.method === "GET") {
+    const page = Number(url.searchParams.get("page") ?? 1);
+    json(res, 200, {
+      success: true,
+      lots: page === 1
+        ? [activeLot("profile-active-1", "Фотоаппарат для путешествий", "profile-seller")]
+        : [activeLot("profile-active-2", "Объектив 50 мм", "profile-seller")],
+      page,
+      pageSize: 9,
+      totalCount: 2,
+      totalPages: 2,
+    });
+    return;
+  }
+
+  if (url.pathname === "/api/sellers/empty-seller/lots" && req.method === "GET") {
+    json(res, 200, { success: true, lots: [], page: 1, pageSize: 9, totalCount: 0, totalPages: 0 });
+    return;
+  }
+
+  if (url.pathname === "/api/sellers/lots-error-seller/lots" && req.method === "GET") {
+    json(res, 500, { success: false, error: "Lots unavailable" });
+    return;
+  }
+
   if (url.pathname === "/api/sellers/seller-1/reviews" && req.method === "GET") {
     json(res, 200, {
       sellerId: "seller-1",
@@ -199,6 +270,24 @@ const server = http.createServer((req, res) => {
       adminComment: "private",
       walletBalance: 500000,
     });
+    return;
+  }
+
+  if (["empty-seller", "lots-error-seller"].some((id) => url.pathname === `/api/sellers/${id}/reviews`) && req.method === "GET") {
+    const sellerId = url.pathname.split("/")[3];
+    json(res, 200, { sellerId, reviewsCount: 0, averageRating: 0, reviews: [] });
+    return;
+  }
+
+  if (["empty-seller", "lots-error-seller"].some((id) => url.pathname === `/api/sellers/${id}/trust`) && req.method === "GET") {
+    const sellerId = url.pathname.split("/")[3];
+    json(res, 200, { sellerId, score: 50, badge: "NewSeller", eventsCount: 0, successfulSales: 0, sellerLostDisputes: 0 });
+    return;
+  }
+
+  if (["empty-seller", "lots-error-seller"].some((id) => url.pathname === `/api/auth/users/${id}/public-profile`) && req.method === "GET") {
+    const userId = url.pathname.split("/")[4];
+    json(res, 200, { userId, nickname: userId, name: "Тестовый продавец", documentVerificationStatus: "Unverified" });
     return;
   }
 

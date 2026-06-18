@@ -115,6 +115,29 @@ export interface PublicUserProfileResponse {
   documentVerificationStatus: string;
 }
 
+export interface PublicLotSummary {
+  id: string;
+  title: string;
+  description: string;
+  currentPrice: number;
+  startTime: string;
+  endTime: string;
+  sellerId: string;
+  status: string;
+  bidsCount: number;
+  coverImageUrl?: string;
+  supportedDeliveryProviders?: string[];
+}
+
+export interface PublicSellerLotsResponse {
+  success: boolean;
+  lots: PublicLotSummary[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+}
+
 export interface CreateReviewRequest {
   rating: number;
   comment?: string;
