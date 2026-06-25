@@ -267,7 +267,7 @@ const server = http.createServer((req, res) => {
       currentPrice: 1700,
       durationHours: 48,
       startTime: "2026-06-16T10:00:00.000Z",
-      endTime: "2026-06-18T10:00:00.000Z",
+      endTime: "2026-06-18T12:00:00.000Z",
       sellerId: "seller-1",
       winnerId: hasAuth ? "buyer-1" : null,
       status: "DeliveryRequestPending",
