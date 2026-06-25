@@ -1,6 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { API_ENDPOINTS } from "@/lib/constants";
 import { getEnvVar } from "@/lib/env";
+import { setAccessTokenCookie, clearAccessTokenCookie } from "@/lib/auth-cookie";
 
 const BROWSER_API_URL = getEnvVar("NEXT_PUBLIC_API_URL", "http://localhost:5000");
 const SERVER_API_URL = getEnvVar("INTERNAL_API_URL", BROWSER_API_URL);
@@ -32,6 +33,7 @@ api.interceptors.response.use(
           });
           if (data.success && data.accessToken) {
             localStorage.setItem("accessToken", data.accessToken);
+            setAccessTokenCookie(data.accessToken);
             if (data.refreshToken) {
               localStorage.setItem("refreshToken", data.refreshToken);
             }
@@ -45,6 +47,7 @@ api.interceptors.response.use(
           console.warn("Token refresh failed:", err);
           localStorage.removeItem("accessToken");
           localStorage.removeItem("refreshToken");
+          clearAccessTokenCookie();
           if (typeof window !== "undefined") {
             window.location.href = "/login";
           }
@@ -52,6 +55,7 @@ api.interceptors.response.use(
       } else {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
+        clearAccessTokenCookie();
         if (typeof window !== "undefined") {
           window.location.href = "/login";
         }

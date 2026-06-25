@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { cookies } from "next/headers";
 import Header from "@/components/Header";
 import LotDetailClient from "@/components/LotDetailClient";
 import api from "@/lib/api";
@@ -18,10 +19,14 @@ interface LotImage {
 }
 
 const getLotData = cache(async (id: string) => {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("accessToken")?.value;
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
   const [lotRes, imagesRes, bidsRes] = await Promise.all([
-    api.get(`/api/lots/${id}`),
-    api.get(`/api/lots/${id}/images`),
-    api.get(`/api/lots/${id}/bids`),
+    api.get(`/api/lots/${id}`, { headers }),
+    api.get(`/api/lots/${id}/images`, { headers }),
+    api.get(`/api/lots/${id}/bids`, { headers }),
   ]);
   return {
     lot: (lotRes.data || null) as Lot | null,

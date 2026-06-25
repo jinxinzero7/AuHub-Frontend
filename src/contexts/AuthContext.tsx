@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from "rea
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { JWT_CLAIMS, API_ENDPOINTS } from "@/lib/constants";
+import { setAccessTokenCookie, clearAccessTokenCookie } from "@/lib/auth-cookie";
 import type { User, AuthResponse, LoginRequest, RegisterRequest } from "@/types";
 
 interface AuthContextType {
@@ -62,9 +63,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (decoded) {
           setUser(decoded);
           setAccessToken(token);
+          setAccessTokenCookie(token);
         } else {
           localStorage.removeItem("accessToken");
           localStorage.removeItem("refreshToken");
+          clearAccessTokenCookie();
         }
       }
       setIsLoading(false);
@@ -76,6 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (response.data.success && response.data.accessToken) {
       localStorage.setItem("accessToken", response.data.accessToken);
       localStorage.setItem("refreshToken", response.data.refreshToken);
+      setAccessTokenCookie(response.data.accessToken);
       const decoded = decodeJwt(response.data.accessToken);
       setUser(decoded);
       setAccessToken(response.data.accessToken);
@@ -88,6 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (response.data.success && response.data.accessToken) {
       localStorage.setItem("accessToken", response.data.accessToken);
       localStorage.setItem("refreshToken", response.data.refreshToken);
+      setAccessTokenCookie(response.data.accessToken);
       const decoded = decodeJwt(response.data.accessToken);
       setUser(decoded);
       setAccessToken(response.data.accessToken);
@@ -105,6 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (response.data.success && response.data.accessToken) {
       localStorage.setItem("accessToken", response.data.accessToken);
       localStorage.setItem("refreshToken", response.data.refreshToken);
+      setAccessTokenCookie(response.data.accessToken);
       const decoded = decodeJwt(response.data.accessToken);
       setUser(decoded);
       setAccessToken(response.data.accessToken);
@@ -114,6 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
+    clearAccessTokenCookie();
     setUser(null);
     setAccessToken(null);
     router.push("/login");
