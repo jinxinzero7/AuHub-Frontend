@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import * as signalR from "@microsoft/signalr";
+import { getEnvVar } from "@/lib/env";
 
 interface SignalRMessage {
   lotId: string;
@@ -41,7 +42,7 @@ export function useSignalR({ lotId, userId, onNewBid, onLotCompleted, onNewNotif
     if (connectionRef.current || startedRef.current) return;
     if (!localStorage.getItem("accessToken")) return;
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+    const API_URL = getEnvVar("NEXT_PUBLIC_API_URL", "http://localhost:5000");
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(`${API_URL}/hubs/auction`, {
         accessTokenFactory: () => localStorage.getItem("accessToken") ?? "",

@@ -3,13 +3,14 @@ import http from "node:http";
 const portArgIndex = process.argv.indexOf("--port");
 const port = portArgIndex >= 0 ? Number(process.argv[portArgIndex + 1]) : 59999;
 
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+};
+
 const json = (res, status, body) => {
-  res.writeHead(status, {
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Authorization, Content-Type",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  });
+  res.writeHead(status, { "Content-Type": "application/json", ...cors });
   res.end(JSON.stringify(body));
 };
 
@@ -97,17 +98,33 @@ const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${port}`);
 
   if (req.method === "OPTIONS") {
-    res.writeHead(204, {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "Authorization, Content-Type",
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    });
+    res.writeHead(204, cors);
     res.end();
     return;
   }
 
   if (url.pathname === "/health") {
     json(res, 200, { status: "ok" });
+    return;
+  }
+
+  if (url.pathname === "/hubs/auction/negotiate" && req.method === "POST") {
+    json(res, 200, {
+      negotiateId: "mock-negotiate",
+      connectionToken: "mock-token",
+      connectionId: "mock-connection",
+      availableTransports: [],
+    });
+    return;
+  }
+
+  if (url.pathname === "/api/notifications/unread-count" && req.method === "GET") {
+    json(res, 200, { count: 0 });
+    return;
+  }
+
+  if (url.pathname === "/api/notifications" && req.method === "GET") {
+    json(res, 200, { notifications: [] });
     return;
   }
 

@@ -1,7 +1,8 @@
 import type { Lot } from "@/types";
+import { getEnvVar } from "@/lib/env";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const BASE_URL = getEnvVar("NEXT_PUBLIC_SITE_URL", "http://localhost:3000");
+const API_URL = getEnvVar("NEXT_PUBLIC_API_URL", "http://localhost:5000");
 
 export default async function sitemap() {
   const staticRoutes = [

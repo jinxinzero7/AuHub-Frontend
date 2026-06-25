@@ -1,4 +1,5 @@
 import { MetadataRoute } from "next";
+import { getEnvVar } from "@/lib/env";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -7,6 +8,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/login", "/register", "/profile", "/lots/create"],
     },
-    sitemap: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/sitemap.xml`,
+    sitemap: `${getEnvVar("NEXT_PUBLIC_SITE_URL", "http://localhost:3000")}/sitemap.xml`,
   };
 }

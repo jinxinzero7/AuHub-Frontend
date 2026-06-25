@@ -1,8 +1,9 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { API_ENDPOINTS } from "@/lib/constants";
+import { getEnvVar } from "@/lib/env";
 
-const BROWSER_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-const SERVER_API_URL = process.env.INTERNAL_API_URL || BROWSER_API_URL;
+const BROWSER_API_URL = getEnvVar("NEXT_PUBLIC_API_URL", "http://localhost:5000");
+const SERVER_API_URL = getEnvVar("INTERNAL_API_URL", BROWSER_API_URL);
 
 const api = axios.create({
   baseURL: typeof window !== "undefined" ? BROWSER_API_URL : SERVER_API_URL,
