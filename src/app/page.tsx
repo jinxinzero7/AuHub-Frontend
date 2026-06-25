@@ -7,8 +7,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BadgeCheck, Search, ShieldCheck, Truck, WalletCards } from "lucide-react";
 
-export const dynamic = "force-dynamic";
-
 const PAGE_SIZE = 9;
 
 async function getLots(page: number, search?: string): Promise<PaginatedResponse<Lot>> {
